@@ -40,6 +40,8 @@ const EMPTY_SUMMARY: SummaryAggregate = {
  *     description: >
  *       Both bounds are inclusive. Only finalized documents belonging to the authenticated
  *       user are counted; drafts are excluded. An empty range returns zeros rather than 404.
+ *       A malformed date fails validation with VALIDATION_ERROR; a well-formed but reversed
+ *       range fails with INVALID_DATE_RANGE.
  *     parameters:
  *       - in: query
  *         name: startDate
@@ -63,7 +65,7 @@ const EMPTY_SUMMARY: SummaryAggregate = {
  *                       type: object
  *                       properties:
  *                         summary: { $ref: '#/components/schemas/ReportSummary' }
- *       400: { description: 'VALIDATION_ERROR — missing, malformed, or reversed dates', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+ *       400: { description: 'VALIDATION_ERROR for a missing or malformed date; INVALID_DATE_RANGE when endDate precedes startDate.', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
  *       401: { description: 'UNAUTHORIZED', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
  */
 router.get(

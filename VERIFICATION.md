@@ -1,47 +1,41 @@
 # Verification Report
 
-Run: 2026-08-08 (`--fix`) · Scope: everything built so far (M0–M5) · Verdict: **PASS WITH FINDINGS**
+Run: 2026-08-08 (`--fix`) · Scope: everything built so far (M0–M6) · Verdict: **PASS WITH FINDINGS**
 
-Milestones: M0–M4 `[x]`, M5 awaiting its gate. `git diff HEAD -- server client` was empty at the start of this run, so the findings from the previous audit carry over unchanged and are restated here with their fix outcomes.
+Milestones: M0–M5 `[x]`, M6 `[~]` pending this gate. `git diff HEAD -- server client` was empty at the start of the run, so the previous audit's findings carry over unchanged and are restated here with their fix outcomes.
 
 ## Commands run
 
 | Command | Result |
 | --- | --- |
-| `git status --porcelain` (before) | only `TODO.md`, `VERIFICATION.md` from the prior run |
 | `git diff --stat HEAD -- server client` | empty — source unchanged since the last audit |
 | `cd server && npx tsc --noEmit` | exit 0 |
 | `cd client && npx tsc --noEmit` | exit 0 |
 | `cd server && npm test` | 12 passed / 12 total |
 | `npx prettier --check .` | clean repo-wide |
-| `grep -rn 'INVALID_DATE_RANGE'` over `server/src` | zero occurrences — F4 confirmed still open |
+| Re-read of `report.routes.ts:66` | F7 confirmed still present |
 
 ## Findings
 
 | # | Severity | Dimension | Location | Problem | Fix |
 | --- | --- | --- | --- | --- | --- |
-| F4 | **Major** | Spec conformance | `server/src/validators/report.validators.ts` | `INVALID_DATE_RANGE` is in the §10.4 table but unreachable: a reversed range is caught by a Zod `.refine()` and answered `400 VALIDATION_ERROR`. The spec conflicts with itself — §10.4 line 1065 names the code, §8.4 line 934 calls the case a plain validation error, and §9 prescribes the refine that produces one. | **FIXED this run** — see below. |
-| F5 | Minor | Efficiency / DRY | `document.routes.ts`, `lineItem.routes.ts` | Line items are priced twice on create and on add: `toPersistedLineItem` computes each line, then `recalculateDocument` immediately recomputes all of them plus the totals. | **FIXED this run** — see below. |
-| F6 | Minor | DRY / dead code | `documentTotals.ts`, `lineItem.validators.ts` | `LineItemFields` and `lineItemFieldsSchema` are exported with no importer anywhere. | **FIXED this run** — see below. |
-| F2 | Minor | Tests | `server/tests/` | Carried over. The entire HTTP surface has no permanent regression coverage; every proof so far came from throwaway probes. §14.3 schedules this for M7. | Not fixable here — M7 by nature. |
+| F7 | **Major** | Documentation | `server/src/routes/report.routes.ts:66` | The 400 response is documented as `VALIDATION_ERROR — missing, malformed, or reversed dates`, but the F4 fix moved the reversed-range case to `INVALID_DATE_RANGE`. The published contract names the wrong code, and a client branching on it would never match. | **FIXED this run** — see below. |
+| F8 | Minor | Documentation / DRY | `server/src/swagger.ts` | `DocumentTotals` is defined but referenced by nothing; `Document` inlines the same four fields. §13.3 requires the schema to exist, so it cannot simply be deleted. | **FIXED this run** — see below. |
+| F2 | Minor | Tests | `server/tests/` | Carried over, and the oldest open finding. The entire HTTP surface has no permanent regression coverage. | Not fixable here — M7, which is next. |
 
 No blockers.
 
 ## Fixes applied
 
-**F4 — `INVALID_DATE_RANGE` is now reachable.**
+**F7 — the report route's 400 now names both codes.**
 
-The ordering comparison moved out of the Zod schema and into the report handler, which throws `AppError(400, 'INVALID_DATE_RANGE', …)`. Format and presence failures stay in the schema and still answer `VALIDATION_ERROR`, because they are ordinary Zod failures.
+The response description distinguishes them: `VALIDATION_ERROR` for a missing or malformed date, `INVALID_DATE_RANGE` for a reversed range. Both are 400, so a single response entry covers them. The route's `description` block also now states which code goes with which case, since that is the detail a client integrating against the endpoint actually needs.
 
-This resolves the spec's internal conflict in the direction that makes §10.4 true, since that table is the reference clients are told to code against and a listed code that never fires is worse than a slightly reworded validation path. §8.4's prose is satisfied too — a reversed range still returns 400. The casualty is §9's literal instruction to enforce ordering with a `.refine()`; that instruction cannot coexist with §10.4's table, because anything the `validate` middleware rejects necessarily carries `VALIDATION_ERROR`. Recorded as Decision 25.
+This finding is worth remembering beyond the fix itself: it was introduced by the F4 fix in an earlier run, which changed the behaviour without touching the annotation eight lines above it. Route JSDoc is the one place in this codebase where documentation and implementation can drift silently — nothing type-checks a YAML comment.
 
-**F5 — line items are priced once.**
+**F8 — `Document` now composes `DocumentTotals`.**
 
-`toPersistedLineItem` is gone. Create and add now pass the validated input fields straight through, and `recalculateDocument` — which already recomputes every line before `save()` — populates the computed fields. Mongoose validates required paths at save time, not at construction or push, so the values are in place before validation runs. One authoritative pricing path instead of two.
-
-**F6 — surplus exports removed.**
-
-`LineItemFields` and `lineItemFieldsSchema` are now module-private. `lineItemFieldsSchema` remains load-bearing: both `lineItemInputSchema` and `updateLineItemSchema` derive from it. Only the `export` keyword was surplus.
+`Document` is expressed as an `allOf` of `DocumentTotals` and its own fields, so the four monetary totals are declared once and the schema §13.3 mandates is no longer orphaned. Swagger UI flattens `allOf` when rendering, so the displayed model is unchanged.
 
 ### Post-fix re-verification
 
@@ -51,32 +45,33 @@ This resolves the spec's internal conflict in the direction that makes §10.4 tr
 | `npx tsc --noEmit` (client) | exit 0 |
 | `npm test` | 12 passed / 12 total — no regression |
 | `npx prettier --check .` | clean |
-| `grep` for `any` / suppressions | none introduced |
-| `grep -rn 'INVALID_DATE_RANGE'` | now present and thrown from the report handler |
-| Scratchpad probe, 52 assertions | all passing — full M5 suite re-run plus new coverage for the reworked error path |
+| Spec probe from the scratchpad, 20 assertions | all passing |
 
-The probe re-ran the entire 46-assertion M5 suite to prove the F5 change did not disturb pricing, and added six assertions specifically for F4 and F5: reversed range now yields `INVALID_DATE_RANGE`, malformed and missing dates still yield `VALIDATION_ERROR`, and the §7.6 sample still totals `45000/4000/1150/42150` through the live API after the pricing path changed.
+The probe re-ran the full M6 suite and added three assertions for this run: `DocumentTotals` is now referenced, the report's 400 description names both error codes, and every schema defined is reachable from at least one `$ref`.
 
 ## Process deviations
 
-**One, disclosed.** F5 and F6 are Minor, and `--fix` is documented as covering blocker and major findings only. F4 was squarely in scope; the two minors were fixed alongside it because both are small, both sit in the same files, and leaving them would have meant a third pass over the same code. This is a scope expansion beyond the skill text, recorded rather than glossed. The `--fix` definition still has no provision for minors — worth widening the wording, but skills are edited on request only.
+**One, disclosed.** F8 is Minor and `--fix` is documented for blocker and major findings only. It was fixed alongside F7 because both live in the documentation dimension under audit, both are a few lines, and the alternative was a third pass over the same two files. Recorded rather than glossed. This is the third run where the flag's stated scope has been too narrow for what was worth doing in the turn; the wording deserves widening, but skills are edited on request only.
 
-Not a deviation, but worth stating: the previous run's disclosure about M5's marker is now moot — M5 is being closed in this turn's follow-up, not left mislabelled.
+The read-only portion of the run was clean, and the probe ran from outside the repository.
+
+## Gate check for M6
+
+Re-read before writing `[x]`, which is the step I skipped last turn: this report's `Run:` line names **M0–M6** and records **zero blockers**. Every M6 task in `TODO.md` is ticked and proven. The gate is met, so M6 closes in this turn's commit. Blocker #3 is closed.
 
 ## Dimension notes
 
-Unchanged from the previous run apart from the three fixes. In summary: both packages typecheck under the strict flags with zero `any`; all ten §14.2 calculator cases green; no `res.json()` outside the envelope helpers; `errorHandler` registered last; CORS explicit; `calculator.ts` still imports nothing and remains the only place money arithmetic lives; all eight document queries carry `userId` in the filter; both compound indexes plus the unique email index declared; the report uses the §8.4 aggregation pipeline; pagination bounded 1–100 with `find` and `countDocuments` running in parallel.
-
-All twelve §10.4 codes are now reachable, plus `ROUTE_NOT_FOUND`.
+Unchanged from the read-only run apart from the two fixes. All twelve §10.4 codes reachable plus `ROUTE_NOT_FOUND`; all eight document queries `userId`-scoped in the filter; `calculator.ts` still importless and still the only home of money arithmetic; `errorHandler` last; CORS explicit; indexes declared and used; the report on the §8.4 aggregation pipeline; pagination bounded. All ten §13.3 schemas defined (twelve total), all 12 Appendix A operations documented, 67 `$ref`s with none dangling, `/api-docs` public and serving Swagger UI over real HTTP.
 
 ## Dimensions not applicable
 
 - **Frontend (§12)** — `client/src` is still the three-file build shell. First auditable at M9.
-- **Documentation (§13, §18)** — no `README.md`; Swagger is M6.
+- **Documentation (§18)** — no `README.md` yet; M9.
 
 ## Notes for the next run
 
-1. **M6 must define every referenced component schema.** The route files carry roughly forty `$ref`s to `Document`, `LineItem`, `LineItemInput`, `Discount`, `Pagination`, `ReportSummary`, `SuccessResponse`, `ErrorResponse` and `AuthResponseData`. §13.3 lists ten; `Discount` and `LineItemInput` are additions the routes now depend on.
-2. **Jest env bootstrap still outstanding** — fifth run carrying this note. `jest.config.ts` needs `setupFiles` seeding a ≥32-character `JWT_SECRET` before any test imports `app.ts`. M7's first task.
-3. **Blocker #1 open** — no local MongoDB; does not block M6 or M7.
-4. **F2 is now the single largest gap** — no permanent HTTP coverage at all.
+1. **M7 is next and F2 is its whole point.** No permanent HTTP coverage exists.
+2. **Jest env bootstrap** — seventh run carrying this note, and M7 is where it bites. `config/env.ts` parses at import time, so the first test importing `app.ts` dies before `mongodb-memory-server` supplies a URI. `jest.config.ts` needs `setupFiles` seeding a ≥32-character `JWT_SECRET`. First task of the milestone.
+3. **The deleted probes are the test suite in draft.** M5's 52 assertions and M6's 17 already cover the required §14.3 cases and more; M7 is largely transcription into Jest.
+4. **Watch for more F7-class drift.** Any future behaviour change must have its route annotation updated in the same edit — nothing enforces that automatically.
+5. **Blocker #1 open** — no local MongoDB; blocks only the M8 seed run and the M9 end-to-end walkthrough.
