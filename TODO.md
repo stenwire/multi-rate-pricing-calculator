@@ -19,10 +19,10 @@ Ticked only when verified by a real command, never on inspection alone.
 
 ### M1 — Scaffold
 
-- [ ] Root `.env.example` (spec §4 verbatim)
-- [ ] `server/` npm project: deps, `tsconfig.json`, `jest.config.ts`, `.prettierrc`, scripts
-- [ ] `client/` npm project: Vite + React 18 + TypeScript + Tailwind v4, `tsconfig.json`, `vite.config.ts`
-- [ ] Confirm Express resolves to 4.x, not 5.x
+- [x] Root `.env.example` (spec §4 verbatim)
+- [x] `server/` npm project: deps, `tsconfig.json`, `jest.config.ts`, `.prettierrc`, scripts
+- [x] `client/` npm project: Vite + React 18 + TypeScript + Tailwind v4, `tsconfig.json`, `vite.config.ts`
+- [x] Confirm Express resolves to 4.x, not 5.x — resolved 4.22.2
 
 ### M2 — Calculator and its unit tests
 
@@ -92,6 +92,9 @@ Append-only. Newest at the bottom.
 | 2026-08-08 | M0 | `.claude/skills/implement/**` | `/implement` skill plus `MILESTONES.md` and `TODO.md` templates. Encodes the read-tracker → pick task → implement → prove → write back → commit loop, and the Appendix C scope guardrails. |
 | 2026-08-08 | M0 | `.claude/skills/verify/**` | `/verify` skill plus a 100-item audit checklist across eight dimensions, each citing its governing spec section. Reports to `VERIFICATION.md`; fixes only under `--fix`. |
 | 2026-08-08 | M0 | `MILESTONES.md`, `TODO.md` | Tracker seeded from the templates with the M0–M9 breakdown. |
+| 2026-08-08 | M1 | `.env.example`, `.prettierrc`, `.prettierignore` | Env template copied verbatim from spec §4. Single Prettier config at the root, found by both packages via upward resolution, so the setting is not duplicated. |
+| 2026-08-08 | M1 | `server/package.json`, `tsconfig.json`, `jest.config.ts` | Server project with the exact §2 stack. 531 packages installed; express resolved to 4.22.2. tsconfig carries `strict`, `noUnusedLocals`, `noUnusedParameters`; jest on `ts-jest` with `--runInBand` for the in-memory Mongo suite later. |
+| 2026-08-08 | M1 | `client/package.json`, `tsconfig.json`, `vite.config.ts`, `index.html`, `src/{main.tsx,App.tsx,index.css}` | Client project: React 18.3.1, Vite 5.4.21, Tailwind 4.3.3, Router 6.30.4, axios 1.19.0. Build verified green. `App.tsx` is a minimal shell that M9 replaces with the router. |
 
 ---
 
@@ -103,6 +106,10 @@ Deviations from the spec, and anything a reviewer would otherwise question. Each
 | --- | --- | --- |
 | 1 | `MILESTONES.md`, `TODO.md`, and `VERIFICATION.md` live at the project root, outside the spec §3 tree. | Build-process artifacts, not application code. Requested by the user so progress survives across sessions. They ship no runtime behaviour and can be removed before submission without touching the app. |
 | 2 | `.claude/skills/` is committed with the project. | The user asked for the two skills to be housed in the project rather than user-level, so they travel with the repository. |
+| 3 | Prettier config is `{ "singleQuote": true }` rather than bare defaults. | Spec §16.3 allows "default settings (or minimal config)". Every code sample in the spec uses single quotes, so this one setting keeps the implementation byte-identical to the snippets it is meant to reproduce. |
+| 4 | `TECHNICAL_SPEC.md`, `MILESTONES.md`, `TODO.md`, `VERIFICATION.md` are in `.prettierignore`. | The spec is the supplied contract and must stay byte-identical; the trackers are rewritten on every task, and letting Prettier reflow their tables would add noise to every diff. |
+| 5 | No `build`/`start` script on the server; `dev` runs through `ts-node-dev`. | Appendix C excludes deployment configuration and §18.1.4 lists only install, seed, dev, and test. A compile-to-`dist` pipeline nothing invokes would be dead tooling. |
+| 6 | Client uses a single `tsconfig.json` covering `src` and `vite.config.ts`, with `types: ["vite/client", "node"]`. | The usual Vite scaffold splits this into `tsconfig.node.json` plus a `vite-env.d.ts`; naming the types directly gets `import.meta.env` typing with two fewer files, keeping the tree matching spec §3. |
 
 ---
 

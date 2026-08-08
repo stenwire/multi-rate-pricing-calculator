@@ -16,12 +16,12 @@ A milestone reaches `[x]` only when every task under it in `TODO.md` is ticked *
 **Verify:** `git log --oneline` and confirm both skills appear in the skill list.
 **Completed:** 2026-08-08 — both `SKILL.md` files validated for layout and frontmatter, tracker seeded, initial commit made. Skills are discovered at session start, so `/implement` and `/verify` become invocable from the next session onward.
 
-## `[ ]` M1 — Scaffold
+## `[x]` M1 — Scaffold
 
 **Goal:** Root `.gitignore` and `.env.example` (spec §4 verbatim); `server/` and `client/` as two independent npm projects.
 **Acceptance:** No workspaces, no root `package.json`, no shared package. Express pinned to 4.x. tsconfig has `strict`, `noUnusedLocals`, `noUnusedParameters`. `.prettierrc` present.
-**Verify:** `cd server && npx tsc --noEmit` succeeds on an empty source tree; `npm ls express` shows 4.x.
-**Completed:**
+**Verify:** `npm ls express` shows 4.x; `npx tsc --showConfig` resolves the strict flags true; `cd client && npm run build`. (The server `tsc --noEmit` clean run lands in M2 — with `src/` and `tests/` still empty, tsc can only emit TS18003 "no inputs", so the flags were proven with a temporary probe file instead.)
+**Completed:** 2026-08-08 — express@4.22.2; probe file confirmed `noUnusedLocals` fires (TS6133) and a clean file compiles at exit 0; client build green (31 modules, 142.67 kB); prettier clean across both packages.
 
 ## `[ ]` M2 — Calculator and its unit tests
 
