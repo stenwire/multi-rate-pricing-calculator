@@ -37,12 +37,12 @@ A milestone reaches `[x]` only when every task under it in `TODO.md` is ticked *
 **Verify:** `cd server && npx tsc --noEmit`, plus a deliberate bad-env run that crashes with a clear message.
 **Completed:** 2026-08-08 — `tsc --noEmit` exit 0, tests still 12/12, prettier clean, zero `any`. Env crash proven across five scenarios (missing vars, 31-char secret, non-URL URI, valid-with-defaults, Atlas `mongodb+srv://`), each exiting 1 with the offending variable named; root `.env` path resolution confirmed with a temporary file; unreachable MongoDB exits 1 per Appendix B. Envelope, `AppError`, `errorHandler` and `validate` exercised by a throwaway supertest harness, 11/11 — including `details` omitted when absent and no stack leaking into a 500 body.
 
-## `[x]` M4 — Models and auth
+## `[~]` M4 — Models and auth
 
 **Goal:** `models/User.ts`, `models/Document.ts` with the embedded LineItem sub-schema, then auth validators and routes (spec §5, §6).
 **Acceptance:** Both compound indexes declared; `timestamps: true`; `toJSON` maps `_id`→`id`, drops `__v`, strips `passwordHash`. bcryptjs at 12 rounds. Unknown email and wrong password return an identical `INVALID_CREDENTIALS` response.
 **Verify:** `cd server && npx tsc --noEmit && npm test`
-**Completed:** 2026-08-08 — `tsc --noEmit` exit 0, tests 12/12, prettier clean, zero `any`, no `res.json()` outside the helpers. A throwaway `mongodb-memory-server` + supertest probe passed 26/26, covering bcrypt at 12 rounds in storage, the JWT verifying against the secret, byte-identical `INVALID_CREDENTIALS` on both failure paths, `passwordHash` absent from every serialization, both compound indexes, the unique email index, and the status enum rejecting values outside `draft`/`finalized`.
+**Completed:** *Not yet — reverted from `[x]` to `[~]` on 2026-08-08.* The work is done and evidenced (`tsc --noEmit` exit 0, tests 12/12, prettier clean, zero `any`, no `res.json()` outside the helpers, and a throwaway `mongodb-memory-server` + supertest probe at 26/26 covering bcrypt at 12 rounds in storage, the JWT verifying against the secret, byte-identical `INVALID_CREDENTIALS` on both failure paths, `passwordHash` absent from every serialization, both compound indexes, the unique email index, and the status enum rejecting values outside `draft`/`finalized`). But the milestone was closed without the `/verify` pass the skill requires, so the `[x]` was a claim the tracker could not support. It stays `[~]` until `VERIFICATION.md` records an M4-scoped run with zero blockers.
 
 ## `[ ]` M5 — Documents, line items, reports
 

@@ -5,7 +5,32 @@ description: Audit the Multi-Rate Pricing Calculator across build/types, tests, 
 
 # Verify
 
-Audit what has actually been built against `TECHNICAL_SPEC.md`. This skill **reports**; it does not change code unless invoked with `--fix`.
+Audit what has actually been built against `TECHNICAL_SPEC.md`.
+
+## Read-only contract — non-negotiable
+
+Without `--fix`, this run is **strictly read-only**. Exactly two files may be written, and nothing else:
+
+- `VERIFICATION.md` — the report
+- `TODO.md` — the change-log line and any blocker rows
+
+**Every other path in the repository is off limits**, including `server/`, `client/`, the repo root, and `.claude/`. That prohibition covers:
+
+- creating a file, *even one you intend to delete in the same turn* — no probes, no scratch modules, no `__tmp*.ts`
+- `prettier --write`, `sed -i`, `npm install`, `git add`, `git commit`, or anything that mutates the tree or the index
+- mutation testing, or any edit-run-revert loop
+
+A temporary file is a change. Deleting it afterwards does not make the run read-only — it makes the run unreproducible, and if the turn dies partway through it leaves residue that the report then describes as clean. An audit's whole value is that it observed the tree exactly as committed.
+
+**When a check appears to need a write**, do not improvise:
+
+1. Try to answer it without writing — read the file, grep, inspect `tsc --showConfig`, or run an existing test.
+2. If it genuinely needs a scratch file, put it **outside the project** (the session scratchpad directory, with a tsconfig that `extends` the real one) so the repository is untouched.
+3. If neither works, report the item as **`NOT VERIFIABLE IN READ-ONLY MODE`** in the Commands table, state what would settle it, and move on. An honestly unverified line is worth more than a silently perturbed tree.
+
+Before finishing, run `git status --porcelain` and confirm the only modified paths are `VERIFICATION.md` and `TODO.md`. If anything else is dirty, say so in the chat summary — loudly and first, before the verdict.
+
+With `--fix`, code changes are permitted, but only after the report is written, and only for blocker and major findings.
 
 ## Scope
 
@@ -20,9 +45,9 @@ Read `MILESTONES.md` first to learn what is claimed complete. **Only audit what 
 
 ## Procedure
 
-Work the dimensions in order. Run the real commands; do not assess by reading alone where a command can answer the question.
+Work the dimensions in order. Run the real commands; do not assess by reading alone where a command can answer the question. Every command must be read-only — see the contract above.
 
-**1. Build and types.** `cd server && npx tsc --noEmit`, same for `client`. Confirm `strict`, `noUnusedLocals`, `noUnusedParameters` are genuinely enabled in both tsconfigs. Grep for `: any`, `as any`, `<any>`, and `@ts-ignore`. Run `npx prettier --check .`.
+**1. Build and types.** `cd server && npx tsc --noEmit`, same for `client`. Confirm `strict`, `noUnusedLocals`, `noUnusedParameters` are genuinely enabled in both tsconfigs — `npx tsc --showConfig` reports the resolved values without touching anything. Grep for `: any`, `as any`, `<any>`, and `@ts-ignore`. Run `npx prettier --check .` — **never** `--write`.
 
 **2. Tests.** `cd server && npm test`. Then confirm coverage of the *required* cases, not just a green run: all ten calculator cases from spec §14.2 and all five integration cases from §14.3 must exist as real assertions. Verify the §7.6 sample asserts `45000 / 4000 / 1150 / 42150` exactly, and that the fractional-cents case asserts `500 / 2833 / 198 / 3031`.
 
@@ -70,3 +95,9 @@ Verdict is **FAIL** if any blocker is open, **PASS WITH FINDINGS** if only major
 Then append one line to the `TODO.md` change log recording the run and its verdict, and add each blocker to the `TODO.md` Blockers table so it survives the session.
 
 Finally, summarize for the user in chat: the verdict, the blocker count, and the single most important thing to fix. Do not paste the whole table into chat — it is in the file.
+
+## Disclose your own deviations first
+
+If this run departed from the contract above in any way — a file written, a check skipped, a command that turned out not to be read-only — **say so at the top of the chat summary, before the verdict, unprompted.** Record it in `VERIFICATION.md` too, under a `## Process deviations` heading.
+
+Do not wait to be asked. Do not report it only if noticed. A verdict from a run that broke its own rules is not trustworthy until the deviation is on the table, and burying it costs more than the deviation itself.

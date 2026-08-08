@@ -46,9 +46,18 @@ Follow this sequence in order. Do not skip steps 1, 4, or 5.
 
 **6. Commit.** One commit per completed task, message naming the milestone: `M4: add User and Document models with toJSON transforms`. Include the tracker updates in the same commit.
 
-## Closing a milestone
+## Closing a milestone — a hard gate
 
-Before flipping a milestone to `[x]`, run the `/verify` skill scoped to that milestone. Blockers must be fixed, not waived. Major and minor findings may be deferred, but each deferred finding gets a line in `TODO.md` under Blockers or the task queue so it is not lost.
+A milestone may be flipped to `[x]` **only** when both of these are true:
+
+1. Every task under it in `TODO.md` is ticked, each proven by a real command.
+2. **`/verify` has been run for that milestone and `VERIFICATION.md` records it** — its `Run:` line names that milestone in scope, and it reports zero blockers.
+
+Invoke the skill. Running the individual checks yourself inside this turn and calling it verified does **not** satisfy the gate: the point of the separate pass is that it walks all eight dimensions against `references/checklist.md`, including the ones the implementation turn had no reason to think about.
+
+Before writing `[x]`, re-read the `Run:` line at the top of `VERIFICATION.md`. If it names an older scope, the gate has not been met — leave the milestone at `[~]`, say so plainly, and run the verify pass.
+
+Blockers must be fixed, not waived. Major and minor findings may be deferred, but each deferred finding gets a line in `TODO.md` under Blockers or the task queue so it is not lost.
 
 ## Guardrails
 
@@ -58,3 +67,5 @@ Before flipping a milestone to `[x]`, run the `/verify` skill scoped to that mil
 - **When the spec conflicts with reality** (a snippet that will not compile, a type error, an impossible ordering), do not silently improvise. Implement the minimal correct fix and record it under Decisions in `TODO.md` with the reason.
 - **No `any`.** Use `unknown` with narrowing. Comments follow spec §16.4: explain non-obvious business decisions, never restate the code; no file headers, no section separators. The exception is the JSDoc/YAML on route handlers that swagger-jsdoc parses.
 - **Report faithfully.** If tests fail, say so and show the output. If you skipped something, say what and why.
+- **Keep scratch files out of the repository.** Throwaway probes and harnesses go in the session scratchpad directory, not in `server/` or `client/`. Verify the scratch directory exists before writing to it — a failed `cp` that goes unnoticed has already corrupted a source file once in this project. If a probe must live in the tree to resolve imports, delete it before the commit and confirm with `git status`.
+- **Disclose your own process deviations, unprompted, in the turn they happen.** If you skipped a gate, closed a milestone without its verify pass, edited something a skill told you not to, or reported a result you did not actually observe, say so in that turn's summary — first, before the good news. Answering honestly once asked is not enough; by then the tracker already contains a claim that was not true. A deviation you surface yourself is a process note. The same deviation found by the user is a trust problem.
