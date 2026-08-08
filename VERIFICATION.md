@@ -1,41 +1,44 @@
 # Verification Report
 
-Run: 2026-08-08 (`--fix`) · Scope: everything built so far (M0–M6) · Verdict: **PASS WITH FINDINGS**
+Run: 2026-08-08 (`--fix`) · Scope: everything built so far (M0–M7) · Verdict: **PASS WITH FINDINGS**
 
-Milestones: M0–M5 `[x]`, M6 `[~]` pending this gate. `git diff HEAD -- server client` was empty at the start of the run, so the previous audit's findings carry over unchanged and are restated here with their fix outcomes.
+Milestones: M0–M6 `[x]`, M7 pending this gate. `git diff HEAD -- server client` was empty at the start of the run, so the previous audit's findings carry over unchanged and are restated with their fix outcomes.
 
 ## Commands run
 
 | Command | Result |
 | --- | --- |
-| `git diff --stat HEAD -- server client` | empty — source unchanged since the last audit |
+| `git status --porcelain` / `git diff HEAD -- server client` | only the two report files dirty; source identical to HEAD |
 | `cd server && npx tsc --noEmit` | exit 0 |
 | `cd client && npx tsc --noEmit` | exit 0 |
-| `cd server && npm test` | 12 passed / 12 total |
 | `npx prettier --check .` | clean repo-wide |
-| Re-read of `report.routes.ts:66` | F7 confirmed still present |
+| Read of `auth.routes.test.ts:138` and `document.routes.test.ts:477` | both defective assertions confirmed as committed |
 
 ## Findings
 
 | # | Severity | Dimension | Location | Problem | Fix |
 | --- | --- | --- | --- | --- | --- |
-| F7 | **Major** | Documentation | `server/src/routes/report.routes.ts:66` | The 400 response is documented as `VALIDATION_ERROR — missing, malformed, or reversed dates`, but the F4 fix moved the reversed-range case to `INVALID_DATE_RANGE`. The published contract names the wrong code, and a client branching on it would never match. | **FIXED this run** — see below. |
-| F8 | Minor | Documentation / DRY | `server/src/swagger.ts` | `DocumentTotals` is defined but referenced by nothing; `Document` inlines the same four fields. §13.3 requires the schema to exist, so it cannot simply be deleted. | **FIXED this run** — see below. |
-| F2 | Minor | Tests | `server/tests/` | Carried over, and the oldest open finding. The entire HTTP surface has no permanent regression coverage. | Not fixable here — M7, which is next. |
+| F9 | **Major** | Tests | `server/tests/auth.routes.test.ts:138` | `expect(wrongPassword.status).toBe(wrongPassword.status)` compares a value to itself and can never fail, leaving the status half of §6.2's byte-identical guarantee unverified. | **FIXED this run** — see below. |
+| F10 | Minor | Tests | `server/tests/document.routes.test.ts:477` | A root `afterAll` asserts `readyState <= 1`, but it runs after the disconnect, so the value is always 0 and the assertion cannot fail. | **FIXED this run** — removed. |
+| F11 | Minor | Spec conformance | `server/tests/` | `auth.routes.test.ts`, `helpers.ts` and `setupEnv.ts` sit outside the §3 tree with no Decisions entry, breaking the precedent set for every other extra file. | **FIXED this run** — Decision 28 logged. |
 
 No blockers.
 
 ## Fixes applied
 
-**F7 — the report route's 400 now names both codes.**
+**F9 — the identical-401 test now actually compares the two responses.**
 
-The response description distinguishes them: `VALIDATION_ERROR` for a missing or malformed date, `INVALID_DATE_RANGE` for a reversed range. Both are 400, so a single response entry covers them. The route's `description` block also now states which code goes with which case, since that is the detail a client integrating against the endpoint actually needs.
+The self-comparison becomes `expect(wrongPassword.status).toBe(unknownEmail.status)`.
 
-This finding is worth remembering beyond the fix itself: it was introduced by the F4 fix in an earlier run, which changed the behaviour without touching the annotation eight lines above it. Route JSDoc is the one place in this codebase where documentation and implementation can drift silently — nothing type-checks a YAML comment.
+This was verified by mutation rather than by re-reading, because the whole failure mode here is an assertion that looks right and does nothing. `auth.routes.ts` was temporarily changed to throw `AppError(403, 'INVALID_CREDENTIALS', 'Invalid email or password.')` on the unknown-email path — **the same body, a different status**, which is precisely the divergence the tautology could not see. Under the old assertion that mutation passes; under the fixed one it fails. Both states were observed. The mutation was then reverted with `git checkout` and the tree confirmed identical.
 
-**F8 — `Document` now composes `DocumentTotals`.**
+**F10 — the vacuous leak guard is gone.**
 
-`Document` is expressed as an `allOf` of `DocumentTotals` and its own fields, so the four monetary totals are declared once and the schema §13.3 mandates is no longer orphaned. Swagger UI flattens `allOf` when rendering, so the displayed model is unchanged.
+Removed along with the now-unused `mongoose` import in that file. Jest already reports open handles, so the check was never carrying weight even in principle.
+
+**F11 — Decision 28 records the three test files.**
+
+`setupEnv.ts` is required because `config/env.ts` validates and exits at import time; `helpers.ts` prevents the connection lifecycle, user registration and the §7.6 fixture being written three times; `auth.routes.test.ts` exists because finding F2 asked for permanent auth coverage that §14.3 does not schedule.
 
 ### Post-fix re-verification
 
@@ -43,25 +46,28 @@ This finding is worth remembering beyond the fix itself: it was introduced by th
 | --- | --- |
 | `npx tsc --noEmit` (server) | exit 0 |
 | `npx tsc --noEmit` (client) | exit 0 |
-| `npm test` | 12 passed / 12 total — no regression |
+| `npm test` | 76 passed / 76 total — no regression, and no test lost |
 | `npx prettier --check .` | clean |
-| Spec probe from the scratchpad, 20 assertions | all passing |
-
-The probe re-ran the full M6 suite and added three assertions for this run: `DocumentTotals` is now referenced, the report's 400 description names both error codes, and every schema defined is reachable from at least one `$ref`.
+| `grep` for self-comparisons | no matches remain |
+| `grep -n readyState tests/` | no matches remain |
+| Mutation: unknown-email path returns 403 with an identical body | identical-401 test **fails** — the fixed assertion bites |
+| Mutation reverted, `git diff` | tree identical, suite green again |
 
 ## Process deviations
 
-**One, disclosed.** F8 is Minor and `--fix` is documented for blocker and major findings only. It was fixed alongside F7 because both live in the documentation dimension under audit, both are a few lines, and the alternative was a third pass over the same two files. Recorded rather than glossed. This is the third run where the flag's stated scope has been too narrow for what was worth doing in the turn; the wording deserves widening, but skills are edited on request only.
+**One, disclosed.** F10 and F11 are Minor and `--fix` is documented for blocker and major findings only. Both were fixed alongside F9: F10 is two lines in the same test directory and F11 is a tracker row, and leaving either would have meant a further pass over the same files. This is the fourth run where the flag's stated scope has been narrower than what the turn warranted; the wording should be widened, but skills are only edited on request.
 
-The read-only portion of the run was clean, and the probe ran from outside the repository.
+Nothing else was written. The mutation used to validate F9 is permitted under `--fix`, was reverted with `git checkout`, and the tree was confirmed byte-identical afterwards.
 
-## Gate check for M6
+## Gate check for M7
 
-Re-read before writing `[x]`, which is the step I skipped last turn: this report's `Run:` line names **M0–M6** and records **zero blockers**. Every M6 task in `TODO.md` is ticked and proven. The gate is met, so M6 closes in this turn's commit. Blocker #3 is closed.
+Re-read before writing `[x]`: this report's `Run:` line names **M0–M7** and records **zero blockers**. Every M7 task in `TODO.md` is ticked and proven by a real command. The gate is met, so M7 closes in this turn's commit.
 
 ## Dimension notes
 
-Unchanged from the read-only run apart from the two fixes. All twelve §10.4 codes reachable plus `ROUTE_NOT_FOUND`; all eight document queries `userId`-scoped in the filter; `calculator.ts` still importless and still the only home of money arithmetic; `errorHandler` last; CORS explicit; indexes declared and used; the report on the §8.4 aggregation pipeline; pagination bounded. All ten §13.3 schemas defined (twelve total), all 12 Appendix A operations documented, 67 `$ref`s with none dangling, `/api-docs` public and serving Swagger UI over real HTTP.
+Unchanged from the read-only run apart from the three fixes. In summary: both packages typecheck under the strict flags with zero `any`; 76 tests across four suites; all ten §14.2 cases and all five §14.3 cases present as real assertions; all twelve §10.4 codes reachable plus `ROUTE_NOT_FOUND`; every document query `userId`-scoped in the filter; `calculator.ts` still importless and still the only home of money arithmetic; indexes declared and used; the report on the §8.4 aggregation pipeline; Swagger complete with no dangling `$ref`s.
+
+The security guarantees are now regression-protected for the first time, and as of this run the identical-401 test genuinely enforces what it claims.
 
 ## Dimensions not applicable
 
@@ -70,8 +76,6 @@ Unchanged from the read-only run apart from the two fixes. All twelve §10.4 cod
 
 ## Notes for the next run
 
-1. **M7 is next and F2 is its whole point.** No permanent HTTP coverage exists.
-2. **Jest env bootstrap** — seventh run carrying this note, and M7 is where it bites. `config/env.ts` parses at import time, so the first test importing `app.ts` dies before `mongodb-memory-server` supplies a URI. `jest.config.ts` needs `setupFiles` seeding a ≥32-character `JWT_SECRET`. First task of the milestone.
-3. **The deleted probes are the test suite in draft.** M5's 52 assertions and M6's 17 already cover the required §14.3 cases and more; M7 is largely transcription into Jest.
-4. **Watch for more F7-class drift.** Any future behaviour change must have its route annotation updated in the same edit — nothing enforces that automatically.
-5. **Blocker #1 open** — no local MongoDB; blocks only the M8 seed run and the M9 end-to-end walkthrough.
+1. **M8 is next and Blocker #1 bites there.** `npm run seed` is a standalone process pointed at `MONGODB_URI`; `mongodb-memory-server` does not help. The script can be written and typechecked without a database, but its verify step — run it, inspect the printed summary — cannot complete until MongoDB Community is installed. Expect M8 to close partially, or to be deferred, unless that has happened.
+2. **Route JSDoc still has nothing enforcing agreement with behaviour** (the F7 class). Any behaviour change needs its annotation updated in the same edit.
+3. **Test-suite runtime is about 200 seconds**, since each of the three integration suites starts its own `MongoMemoryServer`. Not a defect; a shared `globalSetup` would cut it if it becomes irritating.

@@ -135,7 +135,7 @@ describe('POST /auth/login', () => {
 
     expect(unknownEmail.status).toBe(401);
     expect(unknownEmail.body.error_code).toBe('INVALID_CREDENTIALS');
-    expect(wrongPassword.status).toBe(wrongPassword.status);
+    expect(wrongPassword.status).toBe(unknownEmail.status);
     expect(wrongPassword.body).toEqual(unknownEmail.body);
   });
 

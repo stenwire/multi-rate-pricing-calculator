@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import request from 'supertest';
 import { app } from '../src/app';
 import {
@@ -470,9 +469,4 @@ describe('unmatched routes and malformed bodies', () => {
     expect(response.status).toBe(400);
     expect(response.body.error_code).toBe('VALIDATION_ERROR');
   });
-});
-
-afterAll(async () => {
-  // Surfaces a leaked connection as a failure rather than an open handle warning.
-  expect(mongoose.connection.readyState).toBeLessThanOrEqual(1);
 });

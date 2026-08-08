@@ -58,12 +58,12 @@ A milestone reaches `[x]` only when every task under it in `TODO.md` is ticked *
 **Verify:** Bind port 5000 and request `http://localhost:5000/api-docs/`; assert the generated spec has no dangling `$ref`s and documents all 12 Appendix A operations. (The stated "start the server" form is blocked by Blocker #1 — `index.ts` connects to MongoDB before listening — so the exported `app` is bound directly instead, which exercises the same routing and the same URL.)
 **Completed:** 2026-08-08 — gate satisfied by the M0–M6 run (zero blockers), whose two findings were fixed in the same turn. `tsc --noEmit` exit 0 on both packages, 12/12 unit tests, prettier clean, zero `any`. Spec probe 19/19: all ten §13.3 schemas defined, all 12 operations carrying summary, parameters and responses, 67 `$ref`s with none dangling, auth endpoints `security: []` and the rest inheriting `bearerAuth`. Real HTTP on :5000 returned 200 `text/html` titled "Swagger UI" without a token, while `/api/v1/documents` correctly returned the 401 envelope.
 
-## `[ ]` M7 — Integration tests
+## `[x]` M7 — Integration tests
 
 **Goal:** `document.routes.test.ts` and `lineItem.routes.test.ts` over `mongodb-memory-server` and `supertest` (spec §14.3).
 **Acceptance:** All five required cases, including the four-way finalize lock (metadata update, add, update, delete line item — all 403 `DOCUMENT_FINALIZED`), ownership isolation returning 404, and the report counting only finalized documents.
 **Verify:** `cd server && npm test`
-**Completed:**
+**Completed:** 2026-08-08 - gate satisfied by the M0-M7 run (zero blockers), whose three findings were fixed in the same turn. Suite went from 12 to 76 tests across four files; `tsc --noEmit` exit 0 on both packages, prettier clean, zero `any`, no `.only` or `.skip`. All five section 14.3 cases present as real assertions, plus the concurrent-finalize race, the section 7.6 totals end to end, inclusive date bounds and the INVALID_DATE_RANGE/VALIDATION_ERROR split. Sensitivity proved by four mutations: disabling `requireDraft` failed 7 tests, dropping the `userId` scope failed the ownership tests, splitting login's throw site failed the identical-401 test, and returning 403 with an identical body failed it again once F9 was fixed. Each reverted, tree confirmed identical.
 
 ## `[ ]` M8 — Seed
 
