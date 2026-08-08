@@ -30,12 +30,12 @@ A milestone reaches `[x]` only when every task under it in `TODO.md` is ticked *
 **Verify:** `cd server && npm test`
 **Completed:** 2026-08-08 — 12/12 green; `tsc --noEmit` exit 0; zero imports in `calculator.ts`; prettier clean repo-wide; no `.only`/`.skip`. Four mutations (tax on subtotal, clamp removed, floor instead of round, document-level rounding) each caught by the suite, then the file restored byte-identical with a green baseline.
 
-## `[ ]` M3 — Foundation
+## `[x]` M3 — Foundation
 
 **Goal:** `config/env.ts`, `config/db.ts`, `utils/AppError.ts`, `utils/response.ts`, `middleware/errorHandler.ts`, `middleware/validate.ts`, `types/express.d.ts` (spec §4, §8.0, §9, §10, §11.4).
 **Acceptance:** Env validation crashes at startup naming the offending variable, with no silent fallbacks.
 **Verify:** `cd server && npx tsc --noEmit`, plus a deliberate bad-env run that crashes with a clear message.
-**Completed:**
+**Completed:** 2026-08-08 — `tsc --noEmit` exit 0, tests still 12/12, prettier clean, zero `any`. Env crash proven across five scenarios (missing vars, 31-char secret, non-URL URI, valid-with-defaults, Atlas `mongodb+srv://`), each exiting 1 with the offending variable named; root `.env` path resolution confirmed with a temporary file; unreachable MongoDB exits 1 per Appendix B. Envelope, `AppError`, `errorHandler` and `validate` exercised by a throwaway supertest harness, 11/11 — including `details` omitted when absent and no stack leaking into a 500 body.
 
 ## `[ ]` M4 — Models and auth
 

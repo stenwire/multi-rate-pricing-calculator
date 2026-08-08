@@ -40,11 +40,11 @@ Deferred minor findings. Detail in `VERIFICATION.md`.
 
 ### M3 — Foundation
 
-- [ ] `config/env.ts` (Zod-validated, crashes on invalid) and `config/db.ts`
-- [ ] `utils/AppError.ts` and `utils/response.ts`
-- [ ] `middleware/errorHandler.ts` and `middleware/validate.ts`
-- [ ] `types/express.d.ts`
-- [ ] `app.ts` (exports the app, no listen) and `index.ts` (connect + listen)
+- [x] `config/env.ts` (Zod-validated, crashes on invalid) and `config/db.ts`
+- [x] `utils/AppError.ts` and `utils/response.ts`
+- [x] `middleware/errorHandler.ts` and `middleware/validate.ts`
+- [x] `types/express.d.ts` — `userId` only; `document?: IDocument` added in M4 with the model
+- [x] `app.ts` (exports the app, no listen) and `index.ts` (connect + listen)
 
 ### M4 — Models and auth
 
@@ -107,6 +107,9 @@ Append-only. Newest at the bottom.
 | 2026-08-08 | M1 | `.prettierignore`, `TODO.md` | Cleared `/verify` carry-overs F1 and F2: `.claude/` excluded from Prettier, and Decisions 7–8 added covering the client entry files and that exclusion. |
 | 2026-08-08 | M2 | `server/src/services/calculator.ts` | The pure calculation module (§7). Zero imports — verified by grep, not by eye. A private `computeDiscountAmount` keeps `computeLineItem` readable; totals accumulate in a single pass with no document-level rounding, so `grandTotal === subtotal - totalDiscount + totalTax` holds exactly. |
 | 2026-08-08 | M2 | `server/tests/calculator.test.ts` | Twelve tests covering all ten §14.2 cases (the sample document is split into a line-level and a document-level assertion, plus one extra for omitted `discount`/`taxPercent`). Suite sensitivity proved by mutation testing rather than assumed — see the Decisions note. |
+| 2026-08-08 | M3 | `server/src/config/{env,db}.ts` | Env loader validates with Zod against the root `.env` and exits 1 naming each offending variable. Five scenarios exercised for real: nothing set, short secret, non-URL URI, valid with defaults applied, and a `mongodb+srv://` Atlas URI (accepted, confirming one `env.ts` serves both local and Atlas). `.env` path resolution verified with a temporary root `.env`, since `../../../` is easy to get wrong. |
+| 2026-08-08 | M3 | `server/src/utils/{AppError,response}.ts`, `server/src/middleware/{errorHandler,validate}.ts` | Envelope helpers and error plumbing, transcribed from §8.0/§10.2/§10.3/§9. Exercised by a throwaway supertest harness, 11/11: envelope shapes, `details` omitted when absent, unhandled errors becoming 500 with no stack or path leaking into the body, and validation failures carrying `{ field, message }`. |
+| 2026-08-08 | M3 | `server/src/{app,index}.ts`, `types/express.d.ts` | `app.ts` exports the configured app; `index.ts` connects then listens. Unreachable MongoDB exits 1 as Appendix B requires (verified). The probe also confirmed `req.query` is writable under Express 4 — the pin from M1 is load-bearing, not stylistic. |
 
 ---
 
@@ -124,6 +127,12 @@ Deviations from the spec, and anything a reviewer would otherwise question. Each
 | 6 | Client uses a single `tsconfig.json` covering `src` and `vite.config.ts`, with `types: ["vite/client", "node"]`. | The usual Vite scaffold splits this into `tsconfig.node.json` plus a `vite-env.d.ts`; naming the types directly gets `import.meta.env` typing with two fewer files, keeping the tree matching spec §3. |
 | 7 | `client/index.html` and `client/src/index.css` exist despite not appearing in the spec §3 tree. (`/verify` F2) | Both are structurally required rather than optional: Vite resolves the app from an HTML entry point, and Tailwind v4 is activated by `@import 'tailwindcss'` in a stylesheet. §3 permits files that are absolutely necessary; without these two the client cannot build at all. |
 | 8 | `.claude/` is excluded from Prettier. (`/verify` F1) | The skill files are instruction prose, not shipped code. Reflowing them on every format run would churn the diff without improving anything the reviewer reads. |
+| 9 | `env.ts` uses `safeParse` with a formatted per-variable message and `process.exit(1)`, not the spec snippet's bare `.parse()`. | §4's mandate is "crash immediately with a clear message indicating which variable is missing or invalid". A raw `ZodError` prints a JSON blob and a stack trace; the formatted list names each variable and its constraint on its own line. Same crash, same no-fallback guarantee, message actually readable. |
+| 10 | `errorHandler` takes `_req` and `_next` rather than `req` and `next`. | Express only recognises a function as an error handler if its arity is 4, but both parameters are genuinely unused and `noUnusedParameters` rejects them. The underscore prefix is TypeScript's sanctioned escape and preserves the required arity. |
+| 11 | `types/express.d.ts` currently declares only `userId?: string`. | §11.4 also declares `document?: IDocument`, but `models/Document.ts` does not exist until M4; importing it now would not compile. The field is added with the model. |
+| 12 | CORS origin hardcoded to `http://localhost:5173` in `app.ts`. | §16.1 requires an explicit origin rather than a bare `cors()`, but §4 fixes the contents of `.env.example` and defines no variable for it. Adding one would deviate from §4; hardcoding the Vite dev origin satisfies §16.1 without touching the env contract. |
+| 13 | One `console.log` survives in `index.ts`, printing the listen URL. | §16.3 restricts `console.log` to the error handler and seed script. The startup line is kept because §18.1.4 requires the README to state where the app runs, and a server that prints nothing on boot reads as hung. It is the only one outside the seed script; everything else uses `console.error`. |
+| 14 | `app.ts` exports the app without connecting or listening; `src/index.ts` is the entrypoint. | §3's tree lists neither a listen site nor `index.ts`, but supertest must import the app without opening a socket or a database connection, so the two responsibilities have to be separated. `seed.ts` already sits at `src/` root, so the placement is consistent. |
 
 ---
 
