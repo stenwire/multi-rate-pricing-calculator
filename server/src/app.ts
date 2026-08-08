@@ -5,6 +5,7 @@ import authRoutes from './routes/auth.routes';
 import documentRoutes from './routes/document.routes';
 import lineItemRoutes from './routes/lineItem.routes';
 import reportRoutes from './routes/report.routes';
+import { setupSwagger } from './swagger';
 import { AppError } from './utils/AppError';
 
 // Spec §4 defines no variable for the allowed origin, so the Vite dev server is named
@@ -20,6 +21,8 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/documents', documentRoutes);
 app.use('/api/v1/documents', lineItemRoutes);
 app.use('/api/v1/reports', reportRoutes);
+
+setupSwagger(app);
 
 // Without this, an unknown API path falls through to Express's default handler, which
 // answers with an HTML error page — the one response that would escape the §8.0 envelope.
