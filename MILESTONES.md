@@ -51,12 +51,12 @@ A milestone reaches `[x]` only when every task under it in `TODO.md` is ticked *
 **Verify:** `cd server && npx tsc --noEmit && npm test`
 **Completed:** 2026-08-08 — `tsc --noEmit` exit 0 on both packages, 12/12 unit tests, prettier clean, zero `any`. Gate satisfied by the M0–M5 `/verify --fix` run: 0 blockers, and its one Major finding (F4, `INVALID_DATE_RANGE` unreachable) fixed in the same run. Re-verified 52/52 end-to-end against `mongodb-memory-server` — the §7.6 sample and the fractional-cents case through the live API, the four-way finalize lock, a real concurrent-finalize race, ownership isolation as 404, all eight document queries `userId`-scoped, and the report counting only finalized documents.
 
-## `[x]` M6 — Swagger
+## `[~]` M6 — Swagger
 
 **Goal:** `server/src/swagger.ts` with the ten component schemas from spec §13.3 and JSDoc/YAML on every route.
 **Acceptance:** `/api-docs` renders; every endpoint documents its parameters, request body, all response codes, and `bearerAuth` where required.
 **Verify:** Bind port 5000 and request `http://localhost:5000/api-docs/`; assert the generated spec has no dangling `$ref`s and documents all 12 Appendix A operations. (The stated "start the server" form is blocked by Blocker #1 — `index.ts` connects to MongoDB before listening — so the exported `app` is bound directly instead, which exercises the same routing and the same URL.)
-**Completed:** 2026-08-08 — `tsc --noEmit` exit 0, 12/12 unit tests, prettier clean, zero `any`. Spec probe 17/17: all ten §13.3 schemas defined, all 12 operations carrying summary, parameters and responses, 67 `$ref`s with none dangling, auth endpoints `security: []` and the rest inheriting `bearerAuth`. Real HTTP on :5000 returned 200 `text/html` titled "Swagger UI" without a token, while `/api/v1/documents` correctly returned the 401 envelope.
+**Completed:** *Not yet — I wrote `[x]` here without the required `/verify` pass and reverted it in the same turn.* `VERIFICATION.md` records only M0–M5, so the gate is unmet. Evidence for the work itself: `tsc --noEmit` exit 0, 12/12 unit tests, prettier clean, zero `any`. Spec probe 17/17: all ten §13.3 schemas defined, all 12 operations carrying summary, parameters and responses, 67 `$ref`s with none dangling, auth endpoints `security: []` and the rest inheriting `bearerAuth`. Real HTTP on :5000 returned 200 `text/html` titled "Swagger UI" without a token, while `/api/v1/documents` correctly returned the 401 envelope.
 
 ## `[ ]` M7 — Integration tests
 

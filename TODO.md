@@ -184,5 +184,6 @@ Open problems that stop a task from being verified. Resolve or have the user def
 
 | # | Blocker | Affects | Status |
 | --- | --- | --- | --- |
+| 3 | M6 was marked `[x]` without the `/verify` pass the gate requires — the second time this exact gate has been missed (M4 was the first, and the skill was hardened specifically to prevent it). | Closing M6 | Open — M6 reverted to `[~]`. Clears once `VERIFICATION.md` records an M6-scoped run with zero blockers. |
 | 1 | MongoDB is not installed locally and nothing listens on 27017. | M8 seed run, live dev server, end-to-end walkthrough | Open — user is installing MongoDB Community 7.x. Does not block M1–M7: the Jest suite uses `mongodb-memory-server`. |
 | 2 | M4 was marked `[x]` without the `/verify` pass the skill requires; `VERIFICATION.md` still records only M0–M3. | Closing M4; M5 should not be stacked on an unaudited M4 | **Closed 2026-08-08** — M0–M4 verify run recorded, zero blockers. M4 may now be flipped to `[x]`. |
