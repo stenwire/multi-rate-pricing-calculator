@@ -23,12 +23,12 @@ A milestone reaches `[x]` only when every task under it in `TODO.md` is ticked *
 **Verify:** `npm ls express` shows 4.x; `npx tsc --showConfig` resolves the strict flags true; `cd client && npm run build`. (The server `tsc --noEmit` clean run lands in M2 — with `src/` and `tests/` still empty, tsc can only emit TS18003 "no inputs", so the flags were proven with a temporary probe file instead.)
 **Completed:** 2026-08-08 — express@4.22.2; probe file confirmed `noUnusedLocals` fires (TS6133) and a clean file compiles at exit 0; client build green (31 modules, 142.67 kB); prettier clean across both packages.
 
-## `[ ]` M2 — Calculator and its unit tests
+## `[x]` M2 — Calculator and its unit tests
 
 **Goal:** `server/src/services/calculator.ts` (spec §7) plus all ten required cases in `server/tests/calculator.test.ts` (spec §14.2).
 **Acceptance:** Calculator imports nothing from Mongoose, Express, or any I/O layer. The §7.6 sample asserts exactly `subtotal=45000, totalDiscount=4000, totalTax=1150, grandTotal=42150`. Fractional-cents case (3333 @ 15% / 7%) asserts `500 / 2833 / 198 / 3031`.
 **Verify:** `cd server && npm test`
-**Completed:**
+**Completed:** 2026-08-08 — 12/12 green; `tsc --noEmit` exit 0; zero imports in `calculator.ts`; prettier clean repo-wide; no `.only`/`.skip`. Four mutations (tax on subtotal, clamp removed, floor instead of round, document-level rounding) each caught by the suite, then the file restored byte-identical with a green baseline.
 
 ## `[ ]` M3 — Foundation
 
