@@ -20,7 +20,7 @@ const discountSchema = z
     },
   );
 
-export const lineItemFieldsSchema = z.object({
+const lineItemFieldsSchema = z.object({
   description: z.string().trim().min(1).max(300),
   quantity: z.number().int().min(1),
   unitPrice: z.number().int().min(0),

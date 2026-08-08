@@ -12,14 +12,13 @@ const isoDateStringSchema = z
 
 // Kept as strings: the report echoes the requested range back verbatim (spec §8.4), and the
 // route widens them to a start-of-day / end-of-day instant for the query.
-export const reportSummarySchema = z
-  .object({
-    startDate: isoDateStringSchema,
-    endDate: isoDateStringSchema,
-  })
-  .refine((query) => query.endDate >= query.startDate, {
-    message: 'endDate must be on or after startDate.',
-    path: ['endDate'],
-  });
+//
+// Ordering is deliberately NOT enforced here. Anything this middleware rejects carries
+// VALIDATION_ERROR, which would leave §10.4's INVALID_DATE_RANGE unreachable; the handler
+// raises that code itself.
+export const reportSummarySchema = z.object({
+  startDate: isoDateStringSchema,
+  endDate: isoDateStringSchema,
+});
 
 export type ReportSummaryQuery = z.infer<typeof reportSummarySchema>;

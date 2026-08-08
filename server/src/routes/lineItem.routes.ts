@@ -5,10 +5,7 @@ import { loadDocument, loadedDocument } from '../middleware/loadDocument';
 import { requireDraft } from '../middleware/requireDraft';
 import { validate } from '../middleware/validate';
 import { IDocument } from '../models/Document';
-import {
-  recalculateDocument,
-  toPersistedLineItem,
-} from '../services/documentTotals';
+import { recalculateDocument } from '../services/documentTotals';
 import { AppError } from '../utils/AppError';
 import { asyncHandler } from '../utils/asyncHandler';
 import { successResponse } from '../utils/response';
@@ -79,7 +76,7 @@ router.post(
   asyncHandler(async (req, res) => {
     const document = loadedDocument(req);
 
-    document.lineItems.push(toPersistedLineItem(req.body as LineItemInputBody));
+    document.lineItems.push(req.body as LineItemInputBody);
     recalculateDocument(document);
     await document.save();
 

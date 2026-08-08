@@ -1,11 +1,7 @@
 import { IDocument, LineItemAttributes } from '../models/Document';
-import {
-  LineItemInput,
-  computeDocumentTotals,
-  computeLineItem,
-} from './calculator';
+import { LineItemInput, computeDocumentTotals } from './calculator';
 
-export type LineItemFields = Pick<
+type LineItemFields = Pick<
   LineItemAttributes,
   'description' | 'quantity' | 'unitPrice' | 'discount' | 'taxPercent'
 >;
@@ -19,14 +15,10 @@ function toCalculatorInput(fields: LineItemFields): LineItemInput {
   };
 }
 
-export function toPersistedLineItem(
-  fields: LineItemFields,
-): LineItemAttributes {
-  return { ...fields, ...computeLineItem(toCalculatorInput(fields)) };
-}
-
 // Single point of truth for writing money onto a document. Every create and every line-item
-// mutation routes through here, so no handler ever computes a total itself.
+// mutation routes through here, so no handler ever computes a total itself. Callers may push
+// raw input fields and leave the computed ones unset: Mongoose validates required paths at
+// save() time, by which point this has filled them in.
 export function recalculateDocument(document: IDocument): void {
   const totals = computeDocumentTotals(
     document.lineItems.map(toCalculatorInput),

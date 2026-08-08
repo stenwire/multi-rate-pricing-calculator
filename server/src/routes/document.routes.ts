@@ -4,10 +4,7 @@ import { loadDocument, loadedDocument } from '../middleware/loadDocument';
 import { requireDraft } from '../middleware/requireDraft';
 import { validate } from '../middleware/validate';
 import { DocumentModel } from '../models/Document';
-import {
-  recalculateDocument,
-  toPersistedLineItem,
-} from '../services/documentTotals';
+import { recalculateDocument } from '../services/documentTotals';
 import { AppError } from '../utils/AppError';
 import { asyncHandler } from '../utils/asyncHandler';
 import { successResponse } from '../utils/response';
@@ -134,7 +131,7 @@ router.post(
       title: body.title,
       customer: body.customer,
       issueDate: body.issueDate,
-      lineItems: body.lineItems.map(toPersistedLineItem),
+      lineItems: body.lineItems,
     });
 
     recalculateDocument(document);

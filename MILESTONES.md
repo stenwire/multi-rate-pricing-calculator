@@ -44,12 +44,12 @@ A milestone reaches `[x]` only when every task under it in `TODO.md` is ticked *
 **Verify:** `cd server && npx tsc --noEmit && npm test`
 **Completed:** 2026-08-08 — `tsc --noEmit` exit 0, tests 12/12, prettier clean, zero `any`, no `res.json()` outside the helpers. A `mongodb-memory-server` + supertest probe passed 26/26, covering bcrypt at 12 rounds in storage, the JWT verifying against the secret, byte-identical `INVALID_CREDENTIALS` on both failure paths, `passwordHash` absent from every serialization, both compound indexes, the unique email index, and the status enum rejecting values outside `draft`/`finalized`. *Gate history: initially closed without its verify pass and reverted to `[~]` the same day; closed properly once the M0–M4 run recorded zero blockers.*
 
-## `[ ]` M5 — Documents, line items, reports
+## `[x]` M5 — Documents, line items, reports
 
 **Goal:** `authenticate`, `loadDocument`, `requireDraft` middleware, then the three route files and their validators (spec §8.2–8.4, §11).
 **Acceptance:** Every query scoped by `userId` at the query level. Finalize uses `findOneAndUpdate({ _id, status: 'draft' })`; zero matches returns 409 `ALREADY_FINALIZED`. Report uses the §8.4 aggregation pipeline, not in-memory summing. Every line-item mutation recomputes document totals.
 **Verify:** `cd server && npx tsc --noEmit && npm test`
-**Completed:**
+**Completed:** 2026-08-08 — `tsc --noEmit` exit 0 on both packages, 12/12 unit tests, prettier clean, zero `any`. Gate satisfied by the M0–M5 `/verify --fix` run: 0 blockers, and its one Major finding (F4, `INVALID_DATE_RANGE` unreachable) fixed in the same run. Re-verified 52/52 end-to-end against `mongodb-memory-server` — the §7.6 sample and the fractional-cents case through the live API, the four-way finalize lock, a real concurrent-finalize race, ownership isolation as 404, all eight document queries `userId`-scoped, and the report counting only finalized documents.
 
 ## `[ ]` M6 — Swagger
 

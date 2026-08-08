@@ -3,6 +3,7 @@ import { Types } from 'mongoose';
 import { authenticate } from '../middleware/authenticate';
 import { validate } from '../middleware/validate';
 import { DocumentModel } from '../models/Document';
+import { AppError } from '../utils/AppError';
 import { asyncHandler } from '../utils/asyncHandler';
 import { successResponse } from '../utils/response';
 import {
@@ -70,6 +71,16 @@ router.get(
   validate(reportSummarySchema, 'query'),
   asyncHandler(async (req, res) => {
     const { startDate, endDate } = req.query as unknown as ReportSummaryQuery;
+
+    // Raised here rather than as a Zod refinement so the §10.4 code is the one the client
+    // sees; anything the validate middleware rejects would carry VALIDATION_ERROR instead.
+    if (endDate < startDate) {
+      throw new AppError(
+        400,
+        'INVALID_DATE_RANGE',
+        'endDate must be on or after startDate.',
+      );
+    }
 
     // Both bounds inclusive: start of the first day through the last millisecond of the last.
     const rangeStart = new Date(`${startDate}T00:00:00.000Z`);
