@@ -48,10 +48,11 @@ Deferred minor findings. Detail in `VERIFICATION.md`.
 
 ### M4 — Models and auth
 
-- [ ] `models/User.ts` with `toJSON` stripping `passwordHash`
-- [ ] `models/Document.ts` with embedded LineItem sub-schema and both compound indexes
-- [ ] `validators/auth.validators.ts`
-- [ ] `routes/auth.routes.ts` — register and login
+- [x] `models/User.ts` with `toJSON` stripping `passwordHash`
+- [x] `models/Document.ts` with embedded LineItem sub-schema and both compound indexes
+- [x] `validators/auth.validators.ts`
+- [x] `routes/auth.routes.ts` — register and login
+- [x] `types/express.d.ts` completed with `document?: IDocument` (was deferred from M3)
 
 ### M5 — Documents, line items, reports
 
@@ -110,6 +111,10 @@ Append-only. Newest at the bottom.
 | 2026-08-08 | M3 | `server/src/config/{env,db}.ts` | Env loader validates with Zod against the root `.env` and exits 1 naming each offending variable. Five scenarios exercised for real: nothing set, short secret, non-URL URI, valid with defaults applied, and a `mongodb+srv://` Atlas URI (accepted, confirming one `env.ts` serves both local and Atlas). `.env` path resolution verified with a temporary root `.env`, since `../../../` is easy to get wrong. |
 | 2026-08-08 | M3 | `server/src/utils/{AppError,response}.ts`, `server/src/middleware/{errorHandler,validate}.ts` | Envelope helpers and error plumbing, transcribed from §8.0/§10.2/§10.3/§9. Exercised by a throwaway supertest harness, 11/11: envelope shapes, `details` omitted when absent, unhandled errors becoming 500 with no stack or path leaking into the body, and validation failures carrying `{ field, message }`. |
 | 2026-08-08 | M3 | `server/src/{app,index}.ts`, `types/express.d.ts` | `app.ts` exports the configured app; `index.ts` connects then listens. Unreachable MongoDB exits 1 as Appendix B requires (verified). The probe also confirmed `req.query` is writable under Express 4 — the pin from M1 is load-bearing, not stylistic. |
+| 2026-08-08 | M0–M3 | `VERIFICATION.md` | `/verify` full-scope run. Verdict **PASS** — 0 blockers, 0 major, 0 minor. Both packages typecheck, 12/12 tests, prettier clean, zero `any`, calculator still importless, `errorHandler` last, CORS origin explicit, no `res.json()` outside the helpers, no secrets tracked. The `express.d.ts` augmentation was proven live with a positive and a negative compile probe. |
+| 2026-08-08 | M4 | `server/src/models/{User,Document}.ts`, `server/src/utils/toJSON.ts` | Both schemas per §5, with `timestamps: true`, both compound indexes, and the unique email index. Mongoose 8 types the `toJSON` `ret` parameter strictly, so the spec's inline transform will not compile; the shared `toJSONTransform` solves it once instead of casting in three schemas. `discount` is a `_id: false` sub-schema, which is also how a field literally named `type` avoids being read as a Mongoose type declaration. |
+| 2026-08-08 | M4 | `server/src/validators/auth.validators.ts`, `server/src/routes/auth.routes.ts`, `server/src/utils/asyncHandler.ts`, `app.ts`, `types/express.d.ts` | Register and login per §6, bcryptjs at 12 rounds, mounted at `/api/v1/auth`. Email is normalised in the Zod schema so storage and lookup agree. Login has a single throw site, making the two failure modes identical by construction rather than by matching strings. `express.d.ts` completed with `document?: IDocument` now the model exists. |
+| 2026-08-08 | M4 | (verification) | Throwaway probe against `mongodb-memory-server` + supertest: **26/26**. Covers the envelope, the exact `{ id, email, createdAt }` user shape, bcrypt `$2b$12$` prefix in storage, JWT verifying against the secret with a matching `userId`, 409 on duplicate, 400s with field details, byte-identical 401s, both compound indexes, the unique email index, embedded line-item `_id`→`id`, `discount` defaulting to null, and the status enum rejecting `archived`. Probe deleted afterwards. |
 
 ---
 
@@ -133,6 +138,10 @@ Deviations from the spec, and anything a reviewer would otherwise question. Each
 | 12 | CORS origin hardcoded to `http://localhost:5173` in `app.ts`. | §16.1 requires an explicit origin rather than a bare `cors()`, but §4 fixes the contents of `.env.example` and defines no variable for it. Adding one would deviate from §4; hardcoding the Vite dev origin satisfies §16.1 without touching the env contract. |
 | 13 | One `console.log` survives in `index.ts`, printing the listen URL. | §16.3 restricts `console.log` to the error handler and seed script. The startup line is kept because §18.1.4 requires the README to state where the app runs, and a server that prints nothing on boot reads as hung. It is the only one outside the seed script; everything else uses `console.error`. |
 | 14 | `app.ts` exports the app without connecting or listening; `src/index.ts` is the entrypoint. | §3's tree lists neither a listen site nor `index.ts`, but supertest must import the app without opening a socket or a database connection, so the two responsibilities have to be separated. `seed.ts` already sits at `src/` root, so the placement is consistent. |
+| 15 | `utils/toJSON.ts` added beyond the §3 tree. | Mongoose 8 types the `toJSON` transform's `ret` as `FlatRecord<T> & { _id } & { __v }`, so the spec's `ret.id = ret._id; delete ret._id;` raises TS2339 and TS2790. The alternative is the same four-line cast repeated across the User, line-item and Document schemas; one shared helper fixes it in a single place. |
+| 16 | `utils/asyncHandler.ts` added beyond the §3 tree. | Express 4 does not route rejected promises to the error handler, so every `async` route would need its own `try/catch … next(err)`. §17.3 requires database failures to propagate to the global handler and §17.10 forbids repeated boilerplate; a three-line wrapper satisfies both. `express-async-errors` was rejected as it is not in the §2 stack. |
+| 17 | `SignOptions['expiresIn']` cast in `signToken`. | Confirmed necessary, not defensive: `@types/jsonwebtoken@9.0.10` types `expiresIn` as `number \| StringValue`, and passing the plain `string` from `env.JWT_EXPIRES_IN` fails with TS2322 (verified by removing the cast). A cast to the library's own type is the narrowest fix and avoids `any`. |
+| 18 | Register keeps the spec's find-then-create and does not map a duplicate-key race to 409. | §6.1 prescribes the existence check; the unique index is the real guarantee. Under a concurrent double-submit the second insert would surface as 500 rather than 409. §17.5 asks for race handling specifically on finalize and is silent here, so the spec's boundary is respected rather than widened. Recorded because a reviewer may notice the asymmetry. |
 
 ---
 
