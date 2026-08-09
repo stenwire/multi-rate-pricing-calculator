@@ -5,9 +5,13 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { ApiUser, TOKEN_STORAGE_KEY, authApi } from '../api/client';
-
-const USER_STORAGE_KEY = 'pricing-calculator-user';
+import {
+  ApiUser,
+  TOKEN_STORAGE_KEY,
+  USER_STORAGE_KEY,
+  authApi,
+  clearStoredAuth,
+} from '../api/client';
 
 export interface AuthContextValue {
   user: ApiUser | null;
@@ -66,8 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
-    localStorage.removeItem(USER_STORAGE_KEY);
+    clearStoredAuth();
     setToken(null);
     setUser(null);
   }, []);

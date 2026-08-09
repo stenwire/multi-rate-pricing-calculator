@@ -15,7 +15,7 @@ import { formatDate } from '../utils/format';
 export default function DocumentDetailPage() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
-  const [document, setDocument] = useState<DocumentSummary | null>(null);
+  const [doc, setDoc] = useState<DocumentSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -27,7 +27,7 @@ export default function DocumentDetailPage() {
     setLoading(true);
     setError(null);
     try {
-      setDocument(await documentsApi.get(id));
+      setDoc(await documentsApi.get(id));
     } catch (caught) {
       setError(apiErrorMessage(caught, 'Unable to load the document.'));
     } finally {
@@ -48,7 +48,7 @@ export default function DocumentDetailPage() {
     setBusy(true);
     setError(null);
     try {
-      setDocument(await action());
+      setDoc(await action());
       setEditingLine(null);
       setEditingMeta(false);
     } catch (caught) {
@@ -120,7 +120,7 @@ export default function DocumentDetailPage() {
     return <p className="text-sm text-slate-600">Loading...</p>;
   }
 
-  if (!document) {
+  if (!doc) {
     return (
       <p
         role="alert"
@@ -131,7 +131,7 @@ export default function DocumentDetailPage() {
     );
   }
 
-  const isDraft = document.status === 'draft';
+  const isDraft = doc.status === 'draft';
 
   return (
     <div className="space-y-6">
@@ -146,9 +146,9 @@ export default function DocumentDetailPage() {
 
       <div className="flex flex-wrap items-start gap-4">
         <div>
-          <h1 className="text-xl font-semibold">{document.title}</h1>
+          <h1 className="text-xl font-semibold">{doc.title}</h1>
           <p className="text-sm text-slate-600">
-            {document.customer} · {formatDate(document.issueDate)}
+            {doc.customer} · {formatDate(doc.issueDate)}
           </p>
         </div>
 
@@ -159,7 +159,7 @@ export default function DocumentDetailPage() {
               : 'bg-emerald-100 text-emerald-800'
           }`}
         >
-          {document.status}
+          {doc.status}
         </span>
 
         {isDraft && (
@@ -169,9 +169,9 @@ export default function DocumentDetailPage() {
               disabled={busy}
               onClick={() => {
                 setMeta({
-                  title: document.title,
-                  customer: document.customer,
-                  issueDate: document.issueDate.slice(0, 10),
+                  title: doc.title,
+                  customer: doc.customer,
+                  issueDate: doc.issueDate.slice(0, 10),
                 });
                 setEditingMeta((current) => !current);
               }}
@@ -266,7 +266,7 @@ export default function DocumentDetailPage() {
       )}
 
       <LineItemsTable
-        lineItems={document.lineItems}
+        lineItems={doc.lineItems}
         editable={isDraft}
         busy={busy}
         onEdit={setEditingLine}
@@ -274,10 +274,10 @@ export default function DocumentDetailPage() {
       />
 
       <DocumentTotals
-        subtotal={document.subtotal}
-        totalDiscount={document.totalDiscount}
-        totalTax={document.totalTax}
-        grandTotal={document.grandTotal}
+        subtotal={doc.subtotal}
+        totalDiscount={doc.totalDiscount}
+        totalTax={doc.totalTax}
+        grandTotal={doc.grandTotal}
       />
 
       {isDraft && (

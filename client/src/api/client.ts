@@ -80,6 +80,14 @@ interface ErrorEnvelope {
 }
 
 export const TOKEN_STORAGE_KEY = 'pricing-calculator-token';
+export const USER_STORAGE_KEY = 'pricing-calculator-user';
+
+// Both the deliberate logout and the 401 interceptor clear exactly this set, so the
+// two paths cannot drift apart about what "signed out" leaves behind.
+export function clearStoredAuth(): void {
+  localStorage.removeItem(TOKEN_STORAGE_KEY);
+  localStorage.removeItem(USER_STORAGE_KEY);
+}
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:5000/api/v1',
@@ -99,7 +107,7 @@ api.interceptors.response.use(
   (error: unknown) => {
     // An expired or rejected token must not leave the app sitting on a page it cannot load.
     if (axios.isAxiosError(error) && error.response?.status === 401) {
-      localStorage.removeItem(TOKEN_STORAGE_KEY);
+      clearStoredAuth();
       if (window.location.pathname !== '/login') {
         window.location.assign('/login');
       }
