@@ -1,14 +1,5 @@
 import { LineItem } from '../api/client';
-import { formatMoney } from '../utils/format';
-
-function describeDiscount(line: LineItem): string {
-  if (!line.discount) {
-    return '—';
-  }
-  return line.discount.type === 'percent'
-    ? `${line.discount.value}%`
-    : formatMoney(line.discount.value);
-}
+import { formatDiscount, formatMoney } from '../utils/format';
 
 interface Props {
   lineItems: LineItem[];
@@ -102,7 +93,7 @@ export default function LineItemsTable({
                   {formatMoney(line.unitPrice)}
                 </td>
                 <td className="figure px-3 py-3 text-right text-muted">
-                  {describeDiscount(line)}
+                  {formatDiscount(line.discount)}
                 </td>
                 <td className="figure px-3 py-3 text-right text-muted">
                   {line.taxPercent}%
@@ -150,7 +141,9 @@ export default function LineItemsTable({
                 <p className="mt-0.5 text-sm text-muted">
                   <span className="figure">{line.quantity}</span> ×{' '}
                   <span className="figure">{formatMoney(line.unitPrice)}</span>
-                  {line.discount ? ` · ${describeDiscount(line)} off` : ''}
+                  {line.discount
+                    ? ` · ${formatDiscount(line.discount)} off`
+                    : ''}
                   {line.taxPercent ? ` · ${line.taxPercent}% tax` : ''}
                 </p>
               </div>

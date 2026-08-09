@@ -1,18 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { DocumentSummary, apiErrorMessage, documentsApi } from '../api/client';
-import { formatDate, formatMoney } from '../utils/format';
-
-function describeDiscount(
-  discount: DocumentSummary['lineItems'][number]['discount'],
-): string {
-  if (!discount) {
-    return '—';
-  }
-  return discount.type === 'percent'
-    ? `${discount.value}%`
-    : formatMoney(discount.value);
-}
+import { formatDate, formatDiscount, formatMoney } from '../utils/format';
 
 // A preview of the printed document. What is on screen is what comes out of the printer, so
 // the page renders the sheet itself and keeps its controls outside the printable area.
@@ -119,7 +108,7 @@ export default function DocumentPrintPage() {
                   {formatMoney(line.unitPrice)}
                 </td>
                 <td className="figure py-2.5 pl-3 text-right">
-                  {describeDiscount(line.discount)}
+                  {formatDiscount(line.discount)}
                 </td>
                 <td className="figure py-2.5 pl-3 text-right">
                   {line.taxPercent}%

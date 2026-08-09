@@ -79,7 +79,7 @@ A milestone reaches `[x]` only when every task under it in `TODO.md` is ticked *
 **Verify:** `cd client && npm run build`, then walk the app end to end against the seeded data.
 **Completed:** 2026-08-08 - gate satisfied by the M0-M9 run (zero blockers), whose two findings were fixed in the same turn. Client tree matches section 3 exactly: six pages, six components, api, context, hooks, utils. Both packages typecheck, client builds at 103 modules, 76/76 tests, prettier clean, zero `any`. The client never computes a total - no arithmetic on any money field anywhere in `client/src`, and every mutation re-renders from the document the server returns; the single dollar-to-cent conversion is at submit time. `utils/format.ts` byte-identical to section 12.7. Both interceptors wired, four authenticated routes guarded, finalize behind a confirmation, finalized documents rendering no edit controls. README carries all twelve section 18.1 headings, verified by grep. End-to-end walkthrough against the live stack: logged in as the seeded user, loaded Sample Invoice at 45000/4000/1150/42150, added and removed a line item watching totals move and return, finalized, then confirmed PUT, POST line-items and DELETE all answer DOCUMENT_FINALIZED.
 
-## `[ ]` M10 - Extras
+## `[x]` M10 - Extras
 
 **Goal:** The three optional stretch goals, requested after the build closed: duplicate a
 finalized document into a new draft, reject finalize when a line item is invalid, and a
@@ -93,6 +93,4 @@ chrome.
 **Verify:** `cd server && npm test`, `cd client && npm run build`, and drive all three in a
 browser including print-media emulation.
 
-**Completed:** *Not yet.* The work is done and evidenced - 79/79 tests with the finalize guard
-mutation-tested, and all three exercised in a real browser - but `VERIFICATION.md` records only
-M0-M9, so the gate is unmet.
+**Completed:** 2026-08-09 - gate satisfied by the M0-M10 run (zero blockers), whose single finding was fixed in the same turn. 79/79 tests with the finalize guard mutation-tested; both packages typecheck; prettier clean; all thirteen error codes reachable. Duplicate, print preview and the reworked line-item dialog were each driven in a real browser, including the dialog at 390px. Two print bugs and an unusable edit flow were found and fixed by looking at the running app rather than reading the code.
