@@ -30,47 +30,60 @@ export default function ReportPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Summary report</h1>
+      <header>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Summary report
+        </h1>
+        <p className="mt-1 text-sm text-muted">
+          Totals across finalized documents. Both dates are inclusive.
+        </p>
+      </header>
 
       <form
         onSubmit={handleSubmit}
-        className="flex flex-wrap items-end gap-3 rounded border border-slate-200 bg-white p-6"
+        className="panel flex flex-col gap-4 p-4 sm:flex-row sm:items-end sm:p-5"
       >
-        <label className="text-sm">
-          <span className="mb-1 block font-medium">Start date</span>
+        <div className="flex-1">
+          <label className="field-label" htmlFor="startDate">
+            Start date
+          </label>
           <input
+            id="startDate"
             type="date"
             required
             value={startDate}
             onChange={(event) => setStartDate(event.target.value)}
-            className="rounded border border-slate-300 px-3 py-2"
+            className="field figure"
           />
-        </label>
+        </div>
 
-        <label className="text-sm">
-          <span className="mb-1 block font-medium">End date</span>
+        <div className="flex-1">
+          <label className="field-label" htmlFor="endDate">
+            End date
+          </label>
           <input
+            id="endDate"
             type="date"
             required
             value={endDate}
             onChange={(event) => setEndDate(event.target.value)}
-            className="rounded border border-slate-300 px-3 py-2"
+            className="field figure"
           />
-        </label>
+        </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="rounded bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-50"
+          className="btn btn-primary sm:w-auto"
         >
-          {loading ? 'Generating...' : 'Generate report'}
+          {loading ? 'Generating…' : 'Generate report'}
         </button>
       </form>
 
       {error && (
         <p
           role="alert"
-          className="rounded bg-red-50 px-3 py-2 text-sm text-red-700"
+          className="rounded-lg border border-flag/20 bg-flag-soft px-4 py-3 text-sm text-flag"
         >
           {error}
         </p>

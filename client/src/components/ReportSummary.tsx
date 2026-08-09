@@ -1,30 +1,38 @@
 import { ReportSummary as Summary } from '../api/client';
-import { formatMoney } from '../utils/format';
+import DocumentTotals from './DocumentTotals';
+import { formatDate } from '../utils/format';
 
 export default function ReportSummary({ summary }: { summary: Summary }) {
-  const rows = [
-    { label: 'Documents in range', value: String(summary.documentCount) },
-    { label: 'Subtotal', value: formatMoney(summary.subtotal) },
-    { label: 'Total discount', value: formatMoney(summary.totalDiscount) },
-    { label: 'Total tax', value: formatMoney(summary.totalTax) },
-    { label: 'Grand total', value: formatMoney(summary.grandTotal) },
-  ];
-
   return (
-    <div className="rounded border border-slate-200 bg-white p-6">
-      <h2 className="mb-1 text-lg font-semibold">
-        {summary.startDate} to {summary.endDate}
-      </h2>
-      <p className="mb-4 text-sm text-slate-600">Finalized documents only.</p>
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h2 className="text-lg font-semibold">
+          {formatDate(summary.startDate)} — {formatDate(summary.endDate)}
+        </h2>
+        <p className="text-sm text-muted">
+          <span className="figure font-medium text-ink">
+            {summary.documentCount}
+          </span>{' '}
+          finalized {summary.documentCount === 1 ? 'document' : 'documents'} in
+          range
+        </p>
+      </div>
 
-      <dl className="divide-y divide-slate-200 text-sm">
-        {rows.map((row) => (
-          <div key={row.label} className="flex justify-between py-2">
-            <dt className="text-slate-600">{row.label}</dt>
-            <dd className="font-medium">{row.value}</dd>
-          </div>
-        ))}
-      </dl>
-    </div>
+      {summary.documentCount === 0 ? (
+        <div className="panel px-6 py-10 text-center">
+          <p className="text-sm font-medium">Nothing finalized in this range</p>
+          <p className="mt-1 text-sm text-muted">
+            Drafts are never counted. Finalize a document, or widen the dates.
+          </p>
+        </div>
+      ) : (
+        <DocumentTotals
+          subtotal={summary.subtotal}
+          totalDiscount={summary.totalDiscount}
+          totalTax={summary.totalTax}
+          grandTotal={summary.grandTotal}
+        />
+      )}
+    </section>
   );
 }

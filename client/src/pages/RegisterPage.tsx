@@ -23,67 +23,80 @@ export default function RegisterPage() {
       await register(email, password);
       navigate('/documents', { replace: true });
     } catch (caught) {
-      setError(apiErrorMessage(caught, 'Unable to register.'));
+      setError(apiErrorMessage(caught, 'Unable to create the account.'));
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="mx-auto max-w-sm">
-      <h1 className="mb-6 text-xl font-semibold">Create an account</h1>
+    <div className="mx-auto max-w-sm py-4 sm:py-10">
+      <header className="mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Create account
+        </h1>
+        <p className="mt-1 text-sm text-muted">
+          Your documents are visible only to you.
+        </p>
+      </header>
 
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-4 rounded border border-slate-200 bg-white p-6"
-      >
+      <form onSubmit={handleSubmit} className="panel space-y-4 p-5 sm:p-6">
         {error && (
           <p
             role="alert"
-            className="rounded bg-red-50 px-3 py-2 text-sm text-red-700"
+            className="rounded-lg border border-flag/20 bg-flag-soft px-3 py-2 text-sm text-flag"
           >
             {error}
           </p>
         )}
 
-        <label className="block text-sm">
-          <span className="mb-1 block font-medium">Email</span>
+        <div>
+          <label className="field-label" htmlFor="email">
+            Email
+          </label>
           <input
+            id="email"
             type="email"
             required
+            autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="w-full rounded border border-slate-300 px-3 py-2"
+            className="field"
           />
-        </label>
+        </div>
 
-        <label className="block text-sm">
-          <span className="mb-1 block font-medium">Password</span>
+        <div>
+          <label className="field-label" htmlFor="password">
+            Password
+          </label>
           <input
+            id="password"
             type="password"
             required
             minLength={8}
+            autoComplete="new-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="w-full rounded border border-slate-300 px-3 py-2"
+            className="field"
           />
-          <span className="mt-1 block text-xs text-slate-500">
-            At least 8 characters.
-          </span>
-        </label>
+          <p className="mt-1.5 text-xs text-muted">At least 8 characters.</p>
+        </div>
 
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50"
+          className="btn btn-primary w-full"
         >
-          {submitting ? 'Creating account...' : 'Register'}
+          {submitting ? 'Creating account…' : 'Create account'}
         </button>
 
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-muted">
           Already registered?{' '}
-          <Link to="/login" className="underline">
-            Log in
+          <Link
+            to="/login"
+            className="font-medium text-accrual hover:underline"
+          >
+            Sign in
           </Link>
         </p>
       </form>

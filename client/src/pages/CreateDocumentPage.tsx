@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { apiErrorMessage, documentsApi } from '../api/client';
 import {
   DiscountKind,
@@ -51,168 +51,219 @@ export default function CreateDocumentPage() {
   };
 
   return (
-    <div>
-      <h1 className="mb-6 text-xl font-semibold">Create document</h1>
+    <div className="space-y-6">
+      <Link
+        to="/documents"
+        className="text-sm font-medium text-muted hover:text-ink"
+      >
+        ← Documents
+      </Link>
+
+      <header>
+        <h1 className="text-2xl font-semibold tracking-tight">New document</h1>
+        <p className="mt-1 text-sm text-muted">
+          Saved as a draft. You can keep editing it until you finalize.
+        </p>
+      </header>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
           <p
             role="alert"
-            className="rounded bg-red-50 px-3 py-2 text-sm text-red-700"
+            className="rounded-lg border border-flag/20 bg-flag-soft px-4 py-3 text-sm text-flag"
           >
             {error}
           </p>
         )}
 
-        <div className="grid gap-4 rounded border border-slate-200 bg-white p-6 md:grid-cols-3">
-          <label className="text-sm">
-            <span className="mb-1 block font-medium">Title</span>
+        <div className="panel grid gap-4 p-4 sm:grid-cols-3 sm:p-5">
+          <div>
+            <label className="field-label" htmlFor="title">
+              Title
+            </label>
             <input
+              id="title"
               required
               maxLength={200}
+              placeholder="Q1 Services"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              className="w-full rounded border border-slate-300 px-3 py-2"
+              className="field"
             />
-          </label>
+          </div>
 
-          <label className="text-sm">
-            <span className="mb-1 block font-medium">Customer</span>
+          <div>
+            <label className="field-label" htmlFor="customer">
+              Customer
+            </label>
             <input
+              id="customer"
               required
               maxLength={200}
+              placeholder="Acme Corp"
               value={customer}
               onChange={(event) => setCustomer(event.target.value)}
-              className="w-full rounded border border-slate-300 px-3 py-2"
+              className="field"
             />
-          </label>
+          </div>
 
-          <label className="text-sm">
-            <span className="mb-1 block font-medium">Issue date</span>
+          <div>
+            <label className="field-label" htmlFor="issueDate">
+              Issue date
+            </label>
             <input
+              id="issueDate"
               type="date"
               required
               value={issueDate}
               onChange={(event) => setIssueDate(event.target.value)}
-              className="w-full rounded border border-slate-300 px-3 py-2"
+              className="field figure"
             />
-          </label>
+          </div>
         </div>
 
-        <section>
-          <h2 className="mb-3 text-lg font-semibold">Line items</h2>
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold tracking-[0.06em] text-muted uppercase">
+              Line items
+            </h2>
+            <span className="figure text-xs text-muted">
+              {rows.length} {rows.length === 1 ? 'row' : 'rows'}
+            </span>
+          </div>
 
           <div className="space-y-3">
             {rows.map((row, index) => (
-              <div
-                key={index}
-                className="grid gap-3 rounded border border-slate-200 bg-white p-4 md:grid-cols-7"
-              >
-                <label className="text-sm md:col-span-2">
-                  <span className="mb-1 block font-medium">Description</span>
-                  <input
-                    maxLength={300}
-                    value={row.description}
-                    onChange={(event) =>
-                      updateRow(index, 'description', event.target.value)
-                    }
-                    className="w-full rounded border border-slate-300 px-2 py-1.5"
-                  />
-                </label>
+              <div key={index} className="panel p-4">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+                  <div className="lg:col-span-2">
+                    <label className="field-label" htmlFor={`desc-${index}`}>
+                      Description
+                    </label>
+                    <input
+                      id={`desc-${index}`}
+                      maxLength={300}
+                      placeholder="Consulting, retainer, licence…"
+                      value={row.description}
+                      onChange={(event) =>
+                        updateRow(index, 'description', event.target.value)
+                      }
+                      className="field"
+                    />
+                  </div>
 
-                <label className="text-sm">
-                  <span className="mb-1 block font-medium">Qty</span>
-                  <input
-                    type="number"
-                    min={1}
-                    step={1}
-                    value={row.quantity}
-                    onChange={(event) =>
-                      updateRow(index, 'quantity', event.target.value)
-                    }
-                    className="w-full rounded border border-slate-300 px-2 py-1.5"
-                  />
-                </label>
+                  <div>
+                    <label className="field-label" htmlFor={`qty-${index}`}>
+                      Quantity
+                    </label>
+                    <input
+                      id={`qty-${index}`}
+                      type="number"
+                      min={1}
+                      step={1}
+                      value={row.quantity}
+                      onChange={(event) =>
+                        updateRow(index, 'quantity', event.target.value)
+                      }
+                      className="field figure"
+                    />
+                  </div>
 
-                <label className="text-sm">
-                  <span className="mb-1 block font-medium">Unit price ($)</span>
-                  <input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={row.unitPrice}
-                    onChange={(event) =>
-                      updateRow(index, 'unitPrice', event.target.value)
-                    }
-                    className="w-full rounded border border-slate-300 px-2 py-1.5"
-                  />
-                </label>
+                  <div>
+                    <label className="field-label" htmlFor={`price-${index}`}>
+                      Unit price ($)
+                    </label>
+                    <input
+                      id={`price-${index}`}
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      placeholder="0.00"
+                      value={row.unitPrice}
+                      onChange={(event) =>
+                        updateRow(index, 'unitPrice', event.target.value)
+                      }
+                      className="field figure"
+                    />
+                  </div>
 
-                <label className="text-sm">
-                  <span className="mb-1 block font-medium">Discount</span>
-                  <select
-                    value={row.discountKind}
-                    onChange={(event) =>
-                      updateRow(
-                        index,
-                        'discountKind',
-                        event.target.value as DiscountKind,
-                      )
-                    }
-                    className="w-full rounded border border-slate-300 px-2 py-1.5"
-                  >
-                    <option value="none">None</option>
-                    <option value="percent">Percent</option>
-                    <option value="fixed">Fixed</option>
-                  </select>
-                </label>
+                  <div>
+                    <label className="field-label" htmlFor={`dtype-${index}`}>
+                      Discount
+                    </label>
+                    <select
+                      id={`dtype-${index}`}
+                      value={row.discountKind}
+                      onChange={(event) =>
+                        updateRow(
+                          index,
+                          'discountKind',
+                          event.target.value as DiscountKind,
+                        )
+                      }
+                      className="field"
+                    >
+                      <option value="none">None</option>
+                      <option value="percent">Percent</option>
+                      <option value="fixed">Fixed</option>
+                    </select>
+                  </div>
 
-                <label className="text-sm">
-                  <span className="mb-1 block font-medium">
-                    {row.discountKind === 'fixed' ? 'Amount ($)' : 'Value (%)'}
-                  </span>
-                  <input
-                    type="number"
-                    min={0}
-                    max={row.discountKind === 'percent' ? 100 : undefined}
-                    step={row.discountKind === 'fixed' ? '0.01' : '0.1'}
-                    disabled={row.discountKind === 'none'}
-                    value={row.discountValue}
-                    onChange={(event) =>
-                      updateRow(index, 'discountValue', event.target.value)
-                    }
-                    className="w-full rounded border border-slate-300 px-2 py-1.5 disabled:bg-slate-100"
-                  />
-                </label>
+                  <div>
+                    <label className="field-label" htmlFor={`dval-${index}`}>
+                      {row.discountKind === 'fixed'
+                        ? 'Amount ($)'
+                        : 'Percent (%)'}
+                    </label>
+                    <input
+                      id={`dval-${index}`}
+                      type="number"
+                      min={0}
+                      max={row.discountKind === 'percent' ? 100 : undefined}
+                      step={row.discountKind === 'fixed' ? '0.01' : '0.1'}
+                      disabled={row.discountKind === 'none'}
+                      value={row.discountValue}
+                      onChange={(event) =>
+                        updateRow(index, 'discountValue', event.target.value)
+                      }
+                      className="field figure"
+                    />
+                  </div>
 
-                <label className="text-sm">
-                  <span className="mb-1 block font-medium">Tax (%)</span>
-                  <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    step="0.1"
-                    value={row.taxPercent}
-                    onChange={(event) =>
-                      updateRow(index, 'taxPercent', event.target.value)
-                    }
-                    className="w-full rounded border border-slate-300 px-2 py-1.5"
-                  />
-                </label>
-
-                <div className="md:col-span-7">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setRows((current) =>
-                        current.filter((_, i) => i !== index),
-                      )
-                    }
-                    className="text-sm text-red-700 underline"
-                  >
-                    Remove line
-                  </button>
+                  <div>
+                    <label className="field-label" htmlFor={`tax-${index}`}>
+                      Tax (%)
+                    </label>
+                    <input
+                      id={`tax-${index}`}
+                      type="number"
+                      min={0}
+                      max={100}
+                      step="0.1"
+                      value={row.taxPercent}
+                      onChange={(event) =>
+                        updateRow(index, 'taxPercent', event.target.value)
+                      }
+                      className="field figure"
+                    />
+                  </div>
                 </div>
+
+                {rows.length > 1 && (
+                  <div className="mt-3 border-t border-rule pt-3">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setRows((current) =>
+                          current.filter((_, i) => i !== index),
+                        )
+                      }
+                      className="text-sm font-medium text-flag hover:underline"
+                    >
+                      Remove row
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -222,23 +273,27 @@ export default function CreateDocumentPage() {
             onClick={() =>
               setRows((current) => [...current, { ...emptyDraft }])
             }
-            className="mt-3 rounded border border-slate-300 px-4 py-2 text-sm hover:bg-slate-100"
+            className="btn btn-quiet w-full sm:w-auto"
           >
-            Add line item
+            + Add another line
           </button>
         </section>
 
-        <p className="text-sm text-slate-600">
-          Totals are calculated by the server once the document is saved.
-        </p>
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50"
-        >
-          {submitting ? 'Saving...' : 'Save as draft'}
-        </button>
+        <div className="panel flex flex-col-reverse gap-3 p-4 sm:flex-row sm:items-center sm:p-5">
+          <button
+            type="submit"
+            disabled={submitting}
+            className="btn btn-primary"
+          >
+            {submitting ? 'Saving…' : 'Save as draft'}
+          </button>
+          <Link to="/documents" className="btn btn-quiet">
+            Cancel
+          </Link>
+          <p className="text-xs text-muted sm:ml-auto">
+            Totals are calculated by the server once saved.
+          </p>
+        </div>
       </form>
     </div>
   );

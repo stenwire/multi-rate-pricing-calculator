@@ -7,30 +7,57 @@ interface Props {
   grandTotal: number;
 }
 
+function Term({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-[0.625rem] font-semibold tracking-[0.12em] text-muted uppercase">
+        {label}
+      </div>
+      <div className="figure mt-0.5 text-sm font-medium sm:text-base">
+        {formatMoney(value)}
+      </div>
+    </div>
+  );
+}
+
+function Operator({ symbol }: { symbol: string }) {
+  return (
+    <div
+      aria-hidden
+      className="figure self-end pb-0.5 text-base text-muted sm:text-lg"
+    >
+      {symbol}
+    </div>
+  );
+}
+
+// The document's totals are shown as the equation they satisfy. Rounding happens at most twice
+// per line and never at document level, so this identity holds exactly - showing it as an
+// equation is the clearest way to say so.
 export default function DocumentTotals({
   subtotal,
   totalDiscount,
   totalTax,
   grandTotal,
 }: Props) {
-  const rows = [
-    { label: 'Subtotal', value: subtotal },
-    { label: 'Total discount', value: totalDiscount },
-    { label: 'Total tax', value: totalTax },
-  ];
-
   return (
-    <div className="ml-auto w-full max-w-xs rounded border border-slate-200 bg-white p-4 text-sm">
-      {rows.map((row) => (
-        <div key={row.label} className="flex justify-between py-1">
-          <span className="text-slate-600">{row.label}</span>
-          <span>{formatMoney(row.value)}</span>
+    <section className="panel overflow-hidden" aria-label="Document totals">
+      <div className="flex flex-wrap items-end gap-x-4 gap-y-4 bg-ledger px-4 py-4 sm:px-6">
+        <Term label="Subtotal" value={subtotal} />
+        <Operator symbol="−" />
+        <Term label="Discount" value={totalDiscount} />
+        <Operator symbol="+" />
+        <Term label="Tax" value={totalTax} />
+        <Operator symbol="=" />
+        <div className="min-w-0">
+          <div className="text-[0.625rem] font-semibold tracking-[0.12em] text-muted uppercase">
+            Grand total
+          </div>
+          <div className="figure mt-0.5 text-xl font-semibold sm:text-2xl">
+            {formatMoney(grandTotal)}
+          </div>
         </div>
-      ))}
-      <div className="mt-2 flex justify-between border-t border-slate-200 pt-2 text-base font-semibold">
-        <span>Grand total</span>
-        <span>{formatMoney(grandTotal)}</span>
       </div>
-    </div>
+    </section>
   );
 }

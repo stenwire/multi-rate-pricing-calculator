@@ -90,109 +90,121 @@ export default function LineItemForm({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="grid gap-3 rounded border border-slate-200 bg-white p-4 md:grid-cols-6"
-    >
-      <label className="text-sm md:col-span-2">
-        <span className="mb-1 block font-medium">Description</span>
-        <input
-          required
-          maxLength={300}
-          value={draft.description}
-          onChange={(event) => set('description', event.target.value)}
-          className="w-full rounded border border-slate-300 px-2 py-1.5"
-        />
-      </label>
+    <form onSubmit={handleSubmit} className="panel p-4 sm:p-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="lg:col-span-2">
+          <label className="field-label" htmlFor="li-description">
+            Description
+          </label>
+          <input
+            id="li-description"
+            required
+            maxLength={300}
+            placeholder="Consulting, retainer, licence…"
+            value={draft.description}
+            onChange={(event) => set('description', event.target.value)}
+            className="field"
+          />
+        </div>
 
-      <label className="text-sm">
-        <span className="mb-1 block font-medium">Qty</span>
-        <input
-          type="number"
-          required
-          min={1}
-          step={1}
-          value={draft.quantity}
-          onChange={(event) => set('quantity', event.target.value)}
-          className="w-full rounded border border-slate-300 px-2 py-1.5"
-        />
-      </label>
+        <div>
+          <label className="field-label" htmlFor="li-quantity">
+            Quantity
+          </label>
+          <input
+            id="li-quantity"
+            type="number"
+            required
+            min={1}
+            step={1}
+            value={draft.quantity}
+            onChange={(event) => set('quantity', event.target.value)}
+            className="field figure"
+          />
+        </div>
 
-      <label className="text-sm">
-        <span className="mb-1 block font-medium">Unit price ($)</span>
-        <input
-          type="number"
-          required
-          min={0}
-          step="0.01"
-          value={draft.unitPrice}
-          onChange={(event) => set('unitPrice', event.target.value)}
-          className="w-full rounded border border-slate-300 px-2 py-1.5"
-        />
-      </label>
+        <div>
+          <label className="field-label" htmlFor="li-unitPrice">
+            Unit price ($)
+          </label>
+          <input
+            id="li-unitPrice"
+            type="number"
+            required
+            min={0}
+            step="0.01"
+            placeholder="0.00"
+            value={draft.unitPrice}
+            onChange={(event) => set('unitPrice', event.target.value)}
+            className="field figure"
+          />
+        </div>
 
-      <label className="text-sm">
-        <span className="mb-1 block font-medium">Discount</span>
-        <select
-          value={draft.discountKind}
-          onChange={(event) =>
-            set('discountKind', event.target.value as DiscountKind)
-          }
-          className="w-full rounded border border-slate-300 px-2 py-1.5"
-        >
-          <option value="none">None</option>
-          <option value="percent">Percent</option>
-          <option value="fixed">Fixed</option>
-        </select>
-      </label>
+        <div>
+          <label className="field-label" htmlFor="li-discountKind">
+            Discount
+          </label>
+          <select
+            id="li-discountKind"
+            value={draft.discountKind}
+            onChange={(event) =>
+              set('discountKind', event.target.value as DiscountKind)
+            }
+            className="field"
+          >
+            <option value="none">None</option>
+            <option value="percent">Percent</option>
+            <option value="fixed">Fixed</option>
+          </select>
+        </div>
 
-      <label className="text-sm">
-        <span className="mb-1 block font-medium">
-          {draft.discountKind === 'fixed' ? 'Amount ($)' : 'Value (%)'}
-        </span>
-        <input
-          type="number"
-          min={0}
-          max={draft.discountKind === 'percent' ? 100 : undefined}
-          step={draft.discountKind === 'fixed' ? '0.01' : '0.1'}
-          disabled={draft.discountKind === 'none'}
-          required={draft.discountKind !== 'none'}
-          value={draft.discountValue}
-          onChange={(event) => set('discountValue', event.target.value)}
-          className="w-full rounded border border-slate-300 px-2 py-1.5 disabled:bg-slate-100"
-        />
-      </label>
+        <div>
+          <label className="field-label" htmlFor="li-discountValue">
+            {draft.discountKind === 'fixed' ? 'Amount ($)' : 'Percent (%)'}
+          </label>
+          <input
+            id="li-discountValue"
+            type="number"
+            min={0}
+            max={draft.discountKind === 'percent' ? 100 : undefined}
+            step={draft.discountKind === 'fixed' ? '0.01' : '0.1'}
+            disabled={draft.discountKind === 'none'}
+            required={draft.discountKind !== 'none'}
+            value={draft.discountValue}
+            onChange={(event) => set('discountValue', event.target.value)}
+            className="field figure"
+          />
+        </div>
 
-      <label className="text-sm">
-        <span className="mb-1 block font-medium">Tax (%)</span>
-        <input
-          type="number"
-          min={0}
-          max={100}
-          step="0.1"
-          value={draft.taxPercent}
-          onChange={(event) => set('taxPercent', event.target.value)}
-          className="w-full rounded border border-slate-300 px-2 py-1.5"
-        />
-      </label>
+        <div>
+          <label className="field-label" htmlFor="li-taxPercent">
+            Tax (%)
+          </label>
+          <input
+            id="li-taxPercent"
+            type="number"
+            min={0}
+            max={100}
+            step="0.1"
+            value={draft.taxPercent}
+            onChange={(event) => set('taxPercent', event.target.value)}
+            className="field figure"
+          />
+        </div>
+      </div>
 
-      <div className="flex items-end gap-2 md:col-span-6">
-        <button
-          type="submit"
-          disabled={busy}
-          className="rounded bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-50"
-        >
+      <div className="mt-4 flex flex-col-reverse gap-2 border-t border-rule pt-4 sm:flex-row sm:items-center">
+        <button type="submit" disabled={busy} className="btn btn-primary">
           {submitLabel}
         </button>
         {onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded border border-slate-300 px-4 py-2 text-sm hover:bg-slate-100"
-          >
+          <button type="button" onClick={onCancel} className="btn btn-quiet">
             Cancel
           </button>
         )}
+        <p className="text-xs text-muted sm:ml-auto">
+          Enter prices in dollars. The server prices the line.
+        </p>
       </div>
     </form>
   );

@@ -1,1 +1,203 @@
 @import 'tailwindcss';
+
+@theme {
+  --color-paper: #fafafc;
+  --color-surface: #ffffff;
+  --color-ledger: #f1f3f8;
+  --color-rule: #e2e5ee;
+  --color-ink: #14161f;
+  --color-muted: #6b7180;
+  --color-accrual: #3d3bd6;
+  --color-accrual-soft: #ecebfb;
+  --color-seal: #0f766e;
+  --color-seal-soft: #e2f2ef;
+  --color-draft: #a85a00;
+  --color-draft-soft: #fdf1e0;
+  --color-flag: #b22234;
+  --color-flag-soft: #fdeaec;
+
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-figure: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace;
+
+  --radius-panel: 0.625rem;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-display);
+    font-feature-settings: 'ss01';
+  }
+
+  /* Every figure in the product is a quantity that has to line up with the one above it. */
+  .figure {
+    font-family: var(--font-figure);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled),
+  summary,
+  select:not(:disabled),
+  a[href] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled,
+  input:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accrual);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  dialog::backdrop {
+    background: rgb(20 22 31 / 0.55);
+  }
+}
+
+@layer components {
+  .field {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-rule);
+    background: var(--color-surface);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--color-ink);
+    transition:
+      border-color 120ms ease,
+      box-shadow 120ms ease;
+  }
+
+  .field:hover:not(:disabled) {
+    border-color: #cbd0dd;
+  }
+
+  .field:focus {
+    outline: none;
+    border-color: var(--color-accrual);
+    box-shadow: 0 0 0 3px var(--color-accrual-soft);
+  }
+
+  .field:disabled {
+    background: var(--color-ledger);
+    color: var(--color-muted);
+  }
+
+  .field-label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    min-height: 2.5rem;
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease,
+      color 120ms ease;
+  }
+
+  .btn-primary {
+    background: var(--color-accrual);
+    color: #fff;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: #3532bd;
+  }
+
+  .btn-quiet {
+    border: 1px solid var(--color-rule);
+    background: var(--color-surface);
+    color: var(--color-ink);
+  }
+
+  .btn-quiet:hover:not(:disabled) {
+    background: var(--color-ledger);
+  }
+
+  .btn-danger {
+    border: 1px solid #f0c3c8;
+    background: var(--color-surface);
+    color: var(--color-flag);
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    background: var(--color-flag-soft);
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+  }
+
+  .panel {
+    border: 1px solid var(--color-rule);
+    background: var(--color-surface);
+    border-radius: var(--radius-panel);
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 999px;
+    padding: 0.1875rem 0.5rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .pill-draft {
+    background: var(--color-draft-soft);
+    color: var(--color-draft);
+  }
+
+  .pill-sealed {
+    background: var(--color-seal-soft);
+    color: var(--color-seal);
+  }
+
+  /* Column-group headers over the derivation half of the line item table. */
+  .band {
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

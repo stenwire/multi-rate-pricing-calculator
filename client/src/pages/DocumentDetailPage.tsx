@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   DocumentSummary,
   LineItem,
@@ -7,6 +7,7 @@ import {
   apiErrorMessage,
   documentsApi,
 } from '../api/client';
+import ConfirmDialog, { ConfirmRequest } from '../components/ConfirmDialog';
 import DocumentTotals from '../components/DocumentTotals';
 import LineItemForm, { draftFromLineItem } from '../components/LineItemForm';
 import LineItemsTable from '../components/LineItemsTable';
@@ -22,6 +23,9 @@ export default function DocumentDetailPage() {
   const [editingLine, setEditingLine] = useState<LineItem | null>(null);
   const [editingMeta, setEditingMeta] = useState(false);
   const [meta, setMeta] = useState({ title: '', customer: '', issueDate: '' });
+  const [confirmRequest, setConfirmRequest] = useState<ConfirmRequest | null>(
+    null,
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -51,8 +55,10 @@ export default function DocumentDetailPage() {
       setDoc(await action());
       setEditingLine(null);
       setEditingMeta(false);
+      setConfirmRequest(null);
     } catch (caught) {
       setError(apiErrorMessage(caught, failure));
+      setConfirmRequest(null);
     } finally {
       setBusy(false);
     }
@@ -74,25 +80,49 @@ export default function DocumentDetailPage() {
     );
   };
 
-  const handleRemove = (line: LineItem) => {
-    if (!window.confirm(`Remove "${line.description}"?`)) {
-      return;
-    }
-    void run(
-      () => documentsApi.removeLineItem(id, line.id),
-      'Unable to remove the line item.',
-    );
-  };
+  const askRemoveLine = (line: LineItem) =>
+    setConfirmRequest({
+      title: 'Remove this line item?',
+      body: `"${line.description}" will be removed and the document totals recalculated.`,
+      confirmLabel: 'Remove line item',
+      tone: 'danger',
+      onConfirm: () =>
+        void run(
+          () => documentsApi.removeLineItem(id, line.id),
+          'Unable to remove the line item.',
+        ),
+    });
 
-  const handleFinalize = () => {
-    if (!window.confirm('Are you sure? This action cannot be undone.')) {
-      return;
-    }
-    void run(
-      () => documentsApi.finalize(id),
-      'Unable to finalize the document.',
-    );
-  };
+  const askFinalize = () =>
+    setConfirmRequest({
+      title: 'Finalize this document?',
+      body: 'Finalizing locks the document for good. Its line items and totals can never be changed again, and there is no way back to draft.',
+      confirmLabel: 'Finalize',
+      onConfirm: () =>
+        void run(
+          () => documentsApi.finalize(id),
+          'Unable to finalize the document.',
+        ),
+    });
+
+  const askDelete = () =>
+    setConfirmRequest({
+      title: 'Delete this draft?',
+      body: 'The document and all of its line items will be deleted. This cannot be undone.',
+      confirmLabel: 'Delete document',
+      tone: 'danger',
+      onConfirm: async () => {
+        setBusy(true);
+        try {
+          await documentsApi.remove(id);
+          navigate('/documents', { replace: true });
+        } catch (caught) {
+          setError(apiErrorMessage(caught, 'Unable to delete the document.'));
+          setConfirmRequest(null);
+          setBusy(false);
+        }
+      },
+    });
 
   const handleMetaSubmit = (event: FormEvent) => {
     event.preventDefault();
@@ -102,32 +132,24 @@ export default function DocumentDetailPage() {
     );
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm('Delete this draft document?')) {
-      return;
-    }
-    setBusy(true);
-    try {
-      await documentsApi.remove(id);
-      navigate('/documents', { replace: true });
-    } catch (caught) {
-      setError(apiErrorMessage(caught, 'Unable to delete the document.'));
-      setBusy(false);
-    }
-  };
-
   if (loading) {
-    return <p className="text-sm text-slate-600">Loading...</p>;
+    return (
+      <div className="space-y-4">
+        <div className="h-8 w-56 animate-pulse rounded bg-ledger" />
+        <div className="h-24 animate-pulse rounded-lg bg-ledger" />
+        <div className="h-48 animate-pulse rounded-lg bg-ledger" />
+      </div>
+    );
   }
 
   if (!doc) {
     return (
-      <p
-        role="alert"
-        className="rounded bg-red-50 px-3 py-2 text-sm text-red-700"
-      >
-        {error ?? 'Document not found.'}
-      </p>
+      <div className="panel px-6 py-14 text-center">
+        <p className="text-sm font-medium">{error ?? 'Document not found.'}</p>
+        <Link to="/documents" className="btn btn-quiet mt-5 inline-flex">
+          Back to documents
+        </Link>
+      </div>
     );
   }
 
@@ -135,35 +157,40 @@ export default function DocumentDetailPage() {
 
   return (
     <div className="space-y-6">
+      <Link
+        to="/documents"
+        className="text-sm font-medium text-muted hover:text-ink"
+      >
+        ← Documents
+      </Link>
+
       {error && (
         <p
           role="alert"
-          className="rounded bg-red-50 px-3 py-2 text-sm text-red-700"
+          className="rounded-lg border border-flag/20 bg-flag-soft px-4 py-3 text-sm text-flag"
         >
           {error}
         </p>
       )}
 
-      <div className="flex flex-wrap items-start gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">{doc.title}</h1>
-          <p className="text-sm text-slate-600">
-            {doc.customer} · {formatDate(doc.issueDate)}
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-2xl font-semibold tracking-tight break-words">
+              {doc.title}
+            </h1>
+            <span className={`pill ${isDraft ? 'pill-draft' : 'pill-sealed'}`}>
+              {isDraft ? 'Draft' : 'Finalized'}
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-muted">
+            {doc.customer} ·{' '}
+            <span className="figure">{formatDate(doc.issueDate)}</span>
           </p>
         </div>
 
-        <span
-          className={`rounded px-2 py-1 text-xs ${
-            isDraft
-              ? 'bg-amber-100 text-amber-800'
-              : 'bg-emerald-100 text-emerald-800'
-          }`}
-        >
-          {doc.status}
-        </span>
-
         {isDraft && (
-          <div className="ml-auto flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               disabled={busy}
@@ -175,103 +202,102 @@ export default function DocumentDetailPage() {
                 });
                 setEditingMeta((current) => !current);
               }}
-              className="rounded border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-100"
+              className="btn btn-quiet"
             >
-              Edit document
+              Edit details
             </button>
             <button
               type="button"
               disabled={busy}
-              onClick={handleFinalize}
-              className="rounded bg-slate-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
-            >
-              Finalize
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={handleDelete}
-              className="rounded border border-red-300 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50"
+              onClick={askDelete}
+              className="btn btn-danger"
             >
               Delete
             </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={askFinalize}
+              className="btn btn-primary"
+            >
+              Finalize
+            </button>
           </div>
         )}
-      </div>
+      </header>
 
       {!isDraft && (
-        <p className="rounded border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-          This document is finalized and can no longer be changed.
+        <p className="rounded-lg border border-seal/20 bg-seal-soft px-4 py-3 text-sm text-seal">
+          Finalized on{' '}
+          <span className="figure">{formatDate(doc.updatedAt)}</span>. This
+          document is locked — the API rejects every change, not just the
+          buttons.
         </p>
       )}
 
       {isDraft && editingMeta && (
-        <form
-          onSubmit={handleMetaSubmit}
-          className="grid gap-3 rounded border border-slate-200 bg-white p-4 md:grid-cols-4"
-        >
-          <label className="text-sm">
-            <span className="mb-1 block font-medium">Title</span>
-            <input
-              required
-              maxLength={200}
-              value={meta.title}
-              onChange={(event) =>
-                setMeta({ ...meta, title: event.target.value })
-              }
-              className="w-full rounded border border-slate-300 px-2 py-1.5"
-            />
-          </label>
-          <label className="text-sm">
-            <span className="mb-1 block font-medium">Customer</span>
-            <input
-              required
-              maxLength={200}
-              value={meta.customer}
-              onChange={(event) =>
-                setMeta({ ...meta, customer: event.target.value })
-              }
-              className="w-full rounded border border-slate-300 px-2 py-1.5"
-            />
-          </label>
-          <label className="text-sm">
-            <span className="mb-1 block font-medium">Issue date</span>
-            <input
-              type="date"
-              required
-              value={meta.issueDate}
-              onChange={(event) =>
-                setMeta({ ...meta, issueDate: event.target.value })
-              }
-              className="w-full rounded border border-slate-300 px-2 py-1.5"
-            />
-          </label>
-          <div className="flex items-end gap-2">
-            <button
-              type="submit"
-              disabled={busy}
-              className="rounded bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-50"
-            >
-              Save
+        <form onSubmit={handleMetaSubmit} className="panel p-4 sm:p-5">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <label className="field-label" htmlFor="meta-title">
+                Title
+              </label>
+              <input
+                id="meta-title"
+                required
+                maxLength={200}
+                value={meta.title}
+                onChange={(event) =>
+                  setMeta({ ...meta, title: event.target.value })
+                }
+                className="field"
+              />
+            </div>
+            <div>
+              <label className="field-label" htmlFor="meta-customer">
+                Customer
+              </label>
+              <input
+                id="meta-customer"
+                required
+                maxLength={200}
+                value={meta.customer}
+                onChange={(event) =>
+                  setMeta({ ...meta, customer: event.target.value })
+                }
+                className="field"
+              />
+            </div>
+            <div>
+              <label className="field-label" htmlFor="meta-issueDate">
+                Issue date
+              </label>
+              <input
+                id="meta-issueDate"
+                type="date"
+                required
+                value={meta.issueDate}
+                onChange={(event) =>
+                  setMeta({ ...meta, issueDate: event.target.value })
+                }
+                className="field figure"
+              />
+            </div>
+          </div>
+          <div className="mt-4 flex flex-col-reverse gap-2 border-t border-rule pt-4 sm:flex-row">
+            <button type="submit" disabled={busy} className="btn btn-primary">
+              Save details
             </button>
             <button
               type="button"
               onClick={() => setEditingMeta(false)}
-              className="rounded border border-slate-300 px-4 py-2 text-sm hover:bg-slate-100"
+              className="btn btn-quiet"
             >
               Cancel
             </button>
           </div>
         </form>
       )}
-
-      <LineItemsTable
-        lineItems={doc.lineItems}
-        editable={isDraft}
-        busy={busy}
-        onEdit={setEditingLine}
-        onRemove={handleRemove}
-      />
 
       <DocumentTotals
         subtotal={doc.subtotal}
@@ -280,12 +306,25 @@ export default function DocumentDetailPage() {
         grandTotal={doc.grandTotal}
       />
 
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold tracking-[0.06em] text-muted uppercase">
+          Line items
+        </h2>
+        <LineItemsTable
+          lineItems={doc.lineItems}
+          editable={isDraft}
+          busy={busy}
+          onEdit={setEditingLine}
+          onRemove={askRemoveLine}
+        />
+      </section>
+
       {isDraft && (
-        <section>
-          <h2 className="mb-3 text-lg font-semibold">
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold tracking-[0.06em] text-muted uppercase">
             {editingLine
-              ? `Edit "${editingLine.description}"`
-              : 'Add line item'}
+              ? `Editing "${editingLine.description}"`
+              : 'Add a line item'}
           </h2>
           <LineItemForm
             key={editingLine?.id ?? 'new'}
@@ -297,6 +336,12 @@ export default function DocumentDetailPage() {
           />
         </section>
       )}
+
+      <ConfirmDialog
+        request={confirmRequest}
+        busy={busy}
+        onDismiss={() => setConfirmRequest(null)}
+      />
     </div>
   );
 }
