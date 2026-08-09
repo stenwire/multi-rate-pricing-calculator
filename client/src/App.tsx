@@ -4,6 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import CreateDocumentPage from './pages/CreateDocumentPage';
 import DocumentDetailPage from './pages/DocumentDetailPage';
+import DocumentPrintPage from './pages/DocumentPrintPage';
 import DocumentsListPage from './pages/DocumentsListPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -38,6 +39,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <DocumentDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/documents/:id/print"
+              element={
+                <ProtectedRoute>
+                  <DocumentPrintPage />
                 </ProtectedRoute>
               }
             />

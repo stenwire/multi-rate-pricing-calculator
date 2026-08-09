@@ -65,6 +65,8 @@ interface Props {
   busy?: boolean;
   onSubmit: (input: LineItemInput) => void;
   onCancel?: () => void;
+  /** Drops the panel framing when the form is already inside one, such as a dialog. */
+  bare?: boolean;
 }
 
 export default function LineItemForm({
@@ -73,6 +75,7 @@ export default function LineItemForm({
   busy,
   onSubmit,
   onCancel,
+  bare,
 }: Props) {
   const [draft, setDraft] = useState<LineItemDraft>(initial ?? emptyDraft);
 
@@ -90,7 +93,7 @@ export default function LineItemForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="panel p-4 sm:p-5">
+    <form onSubmit={handleSubmit} className={bare ? 'p-5' : 'panel p-4 sm:p-5'}>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
         <div className="lg:col-span-2">
           <label className="field-label" htmlFor="li-description">

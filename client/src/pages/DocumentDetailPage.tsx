@@ -8,8 +8,8 @@ import {
   documentsApi,
 } from '../api/client';
 import ConfirmDialog, { ConfirmRequest } from '../components/ConfirmDialog';
+import LineItemDialog from '../components/LineItemDialog';
 import DocumentTotals from '../components/DocumentTotals';
-import LineItemForm, { draftFromLineItem } from '../components/LineItemForm';
 import LineItemsTable from '../components/LineItemsTable';
 import { formatDate } from '../utils/format';
 
@@ -20,6 +20,7 @@ export default function DocumentDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [lineDialogOpen, setLineDialogOpen] = useState(false);
   const [editingLine, setEditingLine] = useState<LineItem | null>(null);
   const [editingMeta, setEditingMeta] = useState(false);
   const [meta, setMeta] = useState({ title: '', customer: '', issueDate: '' });
@@ -54,6 +55,7 @@ export default function DocumentDetailPage() {
     try {
       setDoc(await action());
       setEditingLine(null);
+      setLineDialogOpen(false);
       setEditingMeta(false);
       setConfirmRequest(null);
     } catch (caught) {
@@ -64,19 +66,27 @@ export default function DocumentDetailPage() {
     }
   };
 
-  const handleAdd = (input: LineItemInput) =>
-    void run(
-      () => documentsApi.addLineItem(id, input),
-      'Unable to add the line item.',
-    );
+  const openAddLine = () => {
+    setEditingLine(null);
+    setLineDialogOpen(true);
+  };
 
-  const handleUpdate = (input: LineItemInput) => {
-    if (!editingLine) {
+  const openEditLine = (line: LineItem) => {
+    setEditingLine(line);
+    setLineDialogOpen(true);
+  };
+
+  const handleLineSubmit = (input: LineItemInput) => {
+    if (editingLine) {
+      void run(
+        () => documentsApi.updateLineItem(id, editingLine.id, input),
+        'Unable to update the line item.',
+      );
       return;
     }
     void run(
-      () => documentsApi.updateLineItem(id, editingLine.id, input),
-      'Unable to update the line item.',
+      () => documentsApi.addLineItem(id, input),
+      'Unable to add the line item.',
     );
   };
 
@@ -218,13 +228,9 @@ export default function DocumentDetailPage() {
         </div>
 
         <div className="flex flex-wrap gap-2 print:hidden">
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="btn btn-quiet"
-          >
+          <Link to={`/documents/${doc.id}/print`} className="btn btn-quiet">
             Print
-          </button>
+          </Link>
 
           {!isDraft && (
             <button
@@ -347,14 +353,26 @@ export default function DocumentDetailPage() {
       )}
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold tracking-[0.06em] text-muted uppercase">
-          Line items
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold tracking-[0.06em] text-muted uppercase">
+            Line items
+          </h2>
+          {isDraft && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={openAddLine}
+              className="btn btn-quiet print:hidden"
+            >
+              Add line item
+            </button>
+          )}
+        </div>
         <LineItemsTable
           lineItems={doc.lineItems}
           editable={isDraft}
           busy={busy}
-          onEdit={setEditingLine}
+          onEdit={openEditLine}
           onRemove={askRemoveLine}
         />
       </section>
@@ -366,23 +384,16 @@ export default function DocumentDetailPage() {
         grandTotal={doc.grandTotal}
       />
 
-      {isDraft && (
-        <section className="space-y-3 print:hidden">
-          <h2 className="text-sm font-semibold tracking-[0.06em] text-muted uppercase">
-            {editingLine
-              ? `Editing "${editingLine.description}"`
-              : 'Add a line item'}
-          </h2>
-          <LineItemForm
-            key={editingLine?.id ?? 'new'}
-            initial={editingLine ? draftFromLineItem(editingLine) : undefined}
-            submitLabel={editingLine ? 'Save line item' : 'Add line item'}
-            busy={busy}
-            onSubmit={editingLine ? handleUpdate : handleAdd}
-            onCancel={editingLine ? () => setEditingLine(null) : undefined}
-          />
-        </section>
-      )}
+      <LineItemDialog
+        open={lineDialogOpen}
+        line={editingLine}
+        busy={busy}
+        onSubmit={handleLineSubmit}
+        onClose={() => {
+          setLineDialogOpen(false);
+          setEditingLine(null);
+        }}
+      />
 
       <ConfirmDialog
         request={confirmRequest}

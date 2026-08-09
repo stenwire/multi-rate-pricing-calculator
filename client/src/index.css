@@ -193,12 +193,11 @@
   }
 }
 
-/* Printing a document should produce the document, not a screenshot of the application.
-   The app chrome is dropped, panels lose their screen framing, and the line item table is
-   allowed its full width regardless of the viewport it was printed from. */
+/* The print preview page renders the sheet itself, so printing only has to strip the
+   surrounding application and let the sheet fill the page. */
 @media print {
   @page {
-    margin: 16mm;
+    margin: 14mm;
   }
 
   dialog {
@@ -214,26 +213,10 @@
     padding: 0 !important;
   }
 
-  .panel {
-    border-color: #d5d9e3;
-    border-radius: 0;
-    box-shadow: none;
-    break-inside: avoid;
-  }
-
-  /* The narrow-screen card list and the wide table are mutually exclusive on screen; on paper
-     the table is always the right one. */
-  .lg\:block {
-    display: block !important;
-  }
-
-  .lg\:hidden {
-    display: none !important;
-  }
-
-  table {
-    width: 100% !important;
-    font-size: 10pt;
+  .print-sheet {
+    max-width: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
   }
 
   tr {
