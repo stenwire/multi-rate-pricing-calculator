@@ -299,7 +299,7 @@ router.delete(
  *                 - type: object
  *                   properties:
  *                     data: { $ref: '#/components/schemas/Document' }
- *       400: { description: 'NO_LINE_ITEMS', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
+ *       400: { description: 'NO_LINE_ITEMS when the document has no line items; INVALID_LINE_ITEMS when a line has a quantity below 1 or a negative unit price.', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
  *       401: { description: 'UNAUTHORIZED', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
  *       403: { description: 'DOCUMENT_FINALIZED', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
  *       404: { description: 'DOCUMENT_NOT_FOUND', content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } } }
@@ -317,6 +317,35 @@ router.post(
         400,
         'NO_LINE_ITEMS',
         'Cannot finalize a document with no line items.',
+      );
+    }
+
+    // Input validation already rejects these, so reaching here means the data arrived by some
+    // other route - a direct write, an import, a future migration. Finalizing is irreversible,
+    // so it is the wrong moment to trust that history.
+    const invalidLines = document.lineItems.flatMap((line, index) => {
+      const problems: { field: string; message: string }[] = [];
+      if (line.quantity <= 0) {
+        problems.push({
+          field: `lineItems[${index}].quantity`,
+          message: 'Quantity must be at least 1.',
+        });
+      }
+      if (line.unitPrice < 0) {
+        problems.push({
+          field: `lineItems[${index}].unitPrice`,
+          message: 'Unit price cannot be negative.',
+        });
+      }
+      return problems;
+    });
+
+    if (invalidLines.length > 0) {
+      throw new AppError(
+        400,
+        'INVALID_LINE_ITEMS',
+        'Cannot finalize a document while a line item is invalid.',
+        invalidLines,
       );
     }
 

@@ -78,3 +78,21 @@ A milestone reaches `[x]` only when every task under it in `TODO.md` is ticked *
 **Acceptance:** Six pages, six components, axios instance with bearer-attach and 401-redirect interceptors, `utils/format.ts` as given. The client never computes a total; dollar→cent conversion happens only at submit. README carries all twelve sections under their exact headers, including the worked calculation example.
 **Verify:** `cd client && npm run build`, then walk the app end to end against the seeded data.
 **Completed:** 2026-08-08 - gate satisfied by the M0-M9 run (zero blockers), whose two findings were fixed in the same turn. Client tree matches section 3 exactly: six pages, six components, api, context, hooks, utils. Both packages typecheck, client builds at 103 modules, 76/76 tests, prettier clean, zero `any`. The client never computes a total - no arithmetic on any money field anywhere in `client/src`, and every mutation re-renders from the document the server returns; the single dollar-to-cent conversion is at submit time. `utils/format.ts` byte-identical to section 12.7. Both interceptors wired, four authenticated routes guarded, finalize behind a confirmation, finalized documents rendering no edit controls. README carries all twelve section 18.1 headings, verified by grep. End-to-end walkthrough against the live stack: logged in as the seeded user, loaded Sample Invoice at 45000/4000/1150/42150, added and removed a line item watching totals move and return, finalized, then confirmed PUT, POST line-items and DELETE all answer DOCUMENT_FINALIZED.
+
+## `[ ]` M10 - Extras
+
+**Goal:** The three optional stretch goals, requested after the build closed: duplicate a
+finalized document into a new draft, reject finalize when a line item is invalid, and a
+printable view.
+
+**Acceptance:** Finalize refuses a document with a quantity below 1 or a negative unit price and
+says which field; duplicating a finalized document produces a draft with the same lines and
+server-recomputed totals; printing a document yields the document itself, without application
+chrome.
+
+**Verify:** `cd server && npm test`, `cd client && npm run build`, and drive all three in a
+browser including print-media emulation.
+
+**Completed:** *Not yet.* The work is done and evidenced - 79/79 tests with the finalize guard
+mutation-tested, and all three exercised in a real browser - but `VERIFICATION.md` records only
+M0-M9, so the gate is unmet.

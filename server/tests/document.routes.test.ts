@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { DocumentModel } from '../src/models/Document';
 import { app } from '../src/app';
 import {
   API,
@@ -252,6 +253,62 @@ describe('POST /documents/:id/finalize', () => {
     expect(response.body.message).toBe(
       'Cannot finalize a document with no line items.',
     );
+  });
+
+  it('refuses to finalize when a line item has an invalid quantity', async () => {
+    const document = await createDocument(owner);
+
+    // Written straight to the collection: the API's own validation makes this
+    // unreachable through it, which is exactly why finalize re-checks.
+    await DocumentModel.updateOne(
+      { _id: document.id },
+      { $set: { 'lineItems.0.quantity': 0 } },
+    );
+
+    const response = await request(app)
+      .post(`${API}/documents/${document.id}/finalize`)
+      .set(owner.auth);
+
+    expect(response.status).toBe(400);
+    expect(response.body.error_code).toBe('INVALID_LINE_ITEMS');
+    expect(response.body.details).toContainEqual({
+      field: 'lineItems[0].quantity',
+      message: 'Quantity must be at least 1.',
+    });
+  });
+
+  it('refuses to finalize when a line item has a negative unit price', async () => {
+    const document = await createDocument(owner);
+
+    await DocumentModel.updateOne(
+      { _id: document.id },
+      { $set: { 'lineItems.1.unitPrice': -500 } },
+    );
+
+    const response = await request(app)
+      .post(`${API}/documents/${document.id}/finalize`)
+      .set(owner.auth);
+
+    expect(response.status).toBe(400);
+    expect(response.body.error_code).toBe('INVALID_LINE_ITEMS');
+    expect(response.body.details[0].field).toBe('lineItems[1].unitPrice');
+  });
+
+  it('leaves the document a draft after refusing to finalize it', async () => {
+    const document = await createDocument(owner);
+    await DocumentModel.updateOne(
+      { _id: document.id },
+      { $set: { 'lineItems.0.quantity': -3 } },
+    );
+
+    await request(app)
+      .post(`${API}/documents/${document.id}/finalize`)
+      .set(owner.auth);
+    const after = await request(app)
+      .get(`${API}/documents/${document.id}`)
+      .set(owner.auth);
+
+    expect(after.body.data.status).toBe('draft');
   });
 
   it('transitions a draft to finalized', async () => {

@@ -26,7 +26,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-paper">
-      <header className="sticky top-0 z-10 border-b border-rule bg-surface/90 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-rule bg-surface/90 backdrop-blur print:hidden">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
           <Link
             to={isAuthenticated ? '/documents' : '/login'}

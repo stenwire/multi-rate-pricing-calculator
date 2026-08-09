@@ -51,7 +51,7 @@ function SeeCalculation({
       aria-expanded={expanded}
       aria-controls={panelId}
       onClick={onToggle}
-      className="inline-flex items-center gap-1.5 rounded-full border border-rule px-2.5 py-1 text-xs font-medium text-muted transition-colors hover:bg-ledger hover:text-ink"
+      className="inline-flex items-center gap-1.5 rounded-full border border-rule px-2.5 py-1 text-xs font-medium text-muted transition-colors hover:bg-ledger hover:text-ink print:hidden"
     >
       <span
         aria-hidden

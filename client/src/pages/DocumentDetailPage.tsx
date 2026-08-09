@@ -124,6 +124,35 @@ export default function DocumentDetailPage() {
       },
     });
 
+  // Duplicating reuses the ordinary create endpoint rather than adding one: the copy is just
+  // a new draft built from this document's inputs, and the server prices it from scratch.
+  const handleDuplicate = async () => {
+    if (!doc) {
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const copy = await documentsApi.create({
+        title: `${doc.title} (copy)`.slice(0, 200),
+        customer: doc.customer,
+        issueDate: doc.issueDate.slice(0, 10),
+        lineItems: doc.lineItems.map((line) => ({
+          description: line.description,
+          quantity: line.quantity,
+          unitPrice: line.unitPrice,
+          discount: line.discount,
+          taxPercent: line.taxPercent,
+        })),
+      });
+      navigate(`/documents/${copy.id}`);
+    } catch (caught) {
+      setError(apiErrorMessage(caught, 'Unable to duplicate the document.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleMetaSubmit = (event: FormEvent) => {
     event.preventDefault();
     void run(
@@ -159,7 +188,7 @@ export default function DocumentDetailPage() {
     <div className="space-y-6">
       <Link
         to="/documents"
-        className="text-sm font-medium text-muted hover:text-ink"
+        className="text-sm font-medium text-muted hover:text-ink print:hidden"
       >
         ← Documents
       </Link>
@@ -188,41 +217,62 @@ export default function DocumentDetailPage() {
           </p>
         </div>
 
-        {isDraft && (
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 print:hidden">
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="btn btn-quiet"
+          >
+            Print
+          </button>
+
+          {!isDraft && (
             <button
               type="button"
               disabled={busy}
-              onClick={() => {
-                setMeta({
-                  title: doc.title,
-                  customer: doc.customer,
-                  issueDate: doc.issueDate.slice(0, 10),
-                });
-                setEditingMeta((current) => !current);
-              }}
+              onClick={handleDuplicate}
               className="btn btn-quiet"
             >
-              Edit details
+              Duplicate as draft
             </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={askDelete}
-              className="btn btn-danger"
-            >
-              Delete
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={askFinalize}
-              className="btn btn-primary"
-            >
-              Finalize
-            </button>
-          </div>
-        )}
+          )}
+
+          {isDraft && (
+            <>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  setMeta({
+                    title: doc.title,
+                    customer: doc.customer,
+                    issueDate: doc.issueDate.slice(0, 10),
+                  });
+                  setEditingMeta((current) => !current);
+                }}
+                className="btn btn-quiet"
+              >
+                Edit details
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={askDelete}
+                className="btn btn-danger"
+              >
+                Delete
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={askFinalize}
+                className="btn btn-primary"
+              >
+                Finalize
+              </button>
+            </>
+          )}
+        </div>
       </header>
 
       {!isDraft && (
@@ -317,7 +367,7 @@ export default function DocumentDetailPage() {
       />
 
       {isDraft && (
-        <section className="space-y-3">
+        <section className="space-y-3 print:hidden">
           <h2 className="text-sm font-semibold tracking-[0.06em] text-muted uppercase">
             {editingLine
               ? `Editing "${editingLine.description}"`
