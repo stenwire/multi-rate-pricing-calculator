@@ -203,7 +203,7 @@ export default function LineItemForm({
           </button>
         )}
         <p className="text-xs text-muted sm:ml-auto">
-          Enter prices in dollars. The server prices the line.
+          Enter prices in dollars.
         </p>
       </div>
     </form>

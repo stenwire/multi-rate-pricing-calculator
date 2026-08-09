@@ -96,7 +96,7 @@ export default function DocumentDetailPage() {
   const askFinalize = () =>
     setConfirmRequest({
       title: 'Finalize this document?',
-      body: 'Finalizing locks the document for good. Its line items and totals can never be changed again, and there is no way back to draft.',
+      body: 'Once finalized, this document can no longer be edited and cannot be returned to draft.',
       confirmLabel: 'Finalize',
       onConfirm: () =>
         void run(
@@ -184,8 +184,7 @@ export default function DocumentDetailPage() {
             </span>
           </div>
           <p className="mt-1 text-sm text-muted">
-            {doc.customer} ·{' '}
-            <span className="figure">{formatDate(doc.issueDate)}</span>
+            {doc.customer} · {formatDate(doc.issueDate)}
           </p>
         </div>
 
@@ -228,10 +227,8 @@ export default function DocumentDetailPage() {
 
       {!isDraft && (
         <p className="rounded-lg border border-seal/20 bg-seal-soft px-4 py-3 text-sm text-seal">
-          Finalized on{' '}
-          <span className="figure">{formatDate(doc.updatedAt)}</span>. This
-          document is locked — the API rejects every change, not just the
-          buttons.
+          Finalized on {formatDate(doc.updatedAt)}. Finalized documents can no
+          longer be edited.
         </p>
       )}
 
@@ -299,13 +296,6 @@ export default function DocumentDetailPage() {
         </form>
       )}
 
-      <DocumentTotals
-        subtotal={doc.subtotal}
-        totalDiscount={doc.totalDiscount}
-        totalTax={doc.totalTax}
-        grandTotal={doc.grandTotal}
-      />
-
       <section className="space-y-3">
         <h2 className="text-sm font-semibold tracking-[0.06em] text-muted uppercase">
           Line items
@@ -318,6 +308,13 @@ export default function DocumentDetailPage() {
           onRemove={askRemoveLine}
         />
       </section>
+
+      <DocumentTotals
+        subtotal={doc.subtotal}
+        totalDiscount={doc.totalDiscount}
+        totalTax={doc.totalTax}
+        grandTotal={doc.grandTotal}
+      />
 
       {isDraft && (
         <section className="space-y-3">

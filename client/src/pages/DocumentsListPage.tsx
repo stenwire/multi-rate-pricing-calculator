@@ -107,8 +107,8 @@ export default function DocumentsListPage() {
             {filter === 'all' ? 'No documents yet' : `No ${filter} documents`}
           </p>
           <p className="mx-auto mt-1 max-w-sm text-sm text-muted">
-            Create a document, add line items with their own discount and tax,
-            and the server prices every one.
+            Create a document and add line items, each with their own discount
+            and tax rate.
           </p>
           <Link
             to="/documents/new"
@@ -157,7 +157,7 @@ export default function DocumentsListPage() {
                     <td className="px-4 py-3 text-muted">
                       {document.customer}
                     </td>
-                    <td className="figure px-4 py-3 text-muted">
+                    <td className="px-4 py-3 text-muted">
                       {formatDate(document.issueDate)}
                     </td>
                     <td className="px-4 py-3">
@@ -200,7 +200,7 @@ export default function DocumentsListPage() {
                     <StatusPill status={document.status} />
                   </div>
                   <div className="mt-3 flex items-baseline justify-between border-t border-rule pt-3">
-                    <span className="figure text-xs text-muted">
+                    <span className="text-xs text-muted">
                       {formatDate(document.issueDate)}
                     </span>
                     <span className="figure text-base font-semibold">

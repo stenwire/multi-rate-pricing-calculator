@@ -291,7 +291,7 @@ export default function CreateDocumentPage() {
             Cancel
           </Link>
           <p className="text-xs text-muted sm:ml-auto">
-            Totals are calculated by the server once saved.
+            Totals are calculated when you save.
           </p>
         </div>
       </form>
