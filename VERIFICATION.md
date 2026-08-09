@@ -1,81 +1,77 @@
 # Verification Report
 
-Run: 2026-08-08 (`--fix`) · Scope: everything built so far (M0–M7) · Verdict: **PASS WITH FINDINGS**
+Run: 2026-08-08 (`--fix`) · Scope: everything built so far (M0–M8), closing the M8 gate · Verdict: **PASS WITH FINDINGS**
 
-Milestones: M0–M6 `[x]`, M7 pending this gate. `git diff HEAD -- server client` was empty at the start of the run, so the previous audit's findings carry over unchanged and are restated with their fix outcomes.
+Milestones: M0–M7 `[x]`, M8 `[ ]` pending this gate, M9 unstarted. Working tree clean at the start of the run. Blocker #1 is closed, so for the first time the whole stack — including the seed — has been exercised against a real MongoDB rather than an in-memory one.
 
 ## Commands run
 
 | Command | Result |
 | --- | --- |
-| `git status --porcelain` / `git diff HEAD -- server client` | only the two report files dirty; source identical to HEAD |
+| `git status --porcelain` (before) | empty — clean baseline |
 | `cd server && npx tsc --noEmit` | exit 0 |
 | `cd client && npx tsc --noEmit` | exit 0 |
+| `cd server && npm test` | 76 passed / 76 total across 4 suites |
 | `npx prettier --check .` | clean repo-wide |
-| Read of `auth.routes.test.ts:138` and `document.routes.test.ts:477` | both defective assertions confirmed as committed |
+| `grep` for `any` / suppressions | no matches |
+| `git ls-files --error-unmatch .env` | not tracked; `.gitignore:6` covers it |
+| `git grep` for bcrypt hashes and JWTs in tracked files | two hits, both prose in `TODO.md` describing the `$2a$12$` prefix — no secrets |
+| `grep -rn 'BCRYPT_SALT_ROUNDS ='` | **declared twice** — see F12 |
+| `grep -rnE 'Math\.(round\|min\|floor\|ceil)\|/ *100'` outside `calculator.ts` | two hits, both non-monetary or display-only — see the DRY note |
+| `grep` for literal totals in `seed.ts` | none — every figure is derived |
+| `grep` for `recalculateDocument` in `seed.ts` | present; the seed uses the same write path as the API |
 
 ## Findings
 
 | # | Severity | Dimension | Location | Problem | Fix |
 | --- | --- | --- | --- | --- | --- |
-| F9 | **Major** | Tests | `server/tests/auth.routes.test.ts:138` | `expect(wrongPassword.status).toBe(wrongPassword.status)` compares a value to itself and can never fail, leaving the status half of §6.2's byte-identical guarantee unverified. | **FIXED this run** — see below. |
-| F10 | Minor | Tests | `server/tests/document.routes.test.ts:477` | A root `afterAll` asserts `readyState <= 1`, but it runs after the disconnect, so the value is always 0 and the assertion cannot fail. | **FIXED this run** — removed. |
-| F11 | Minor | Spec conformance | `server/tests/` | `auth.routes.test.ts`, `helpers.ts` and `setupEnv.ts` sit outside the §3 tree with no Decisions entry, breaking the precedent set for every other extra file. | **FIXED this run** — Decision 28 logged. |
+| F12 | Minor | DRY / Security | `server/src/routes/auth.routes.ts:17`, `server/src/seed.ts:8` | `BCRYPT_SALT_ROUNDS = 12` is declared independently in two files. §6.1 fixes the cost factor at 12, so the two must agree; nothing enforces that. Editing one and missing the other would silently seed users at a different cost factor from the ones registered through the API — a security parameter drifting without any test noticing, since both values are currently correct and no assertion compares them. | Declare it once and import it. The natural home is alongside the other auth plumbing; exporting the constant from `auth.routes.ts` and importing it into `seed.ts` is the smallest change. |
 
-No blockers.
+No blockers. No major findings.
 
 ## Fixes applied
 
-**F9 — the identical-401 test now actually compares the two responses.**
+**F12 — the bcrypt cost factor is now declared once.**
 
-The self-comparison becomes `expect(wrongPassword.status).toBe(unknownEmail.status)`.
-
-This was verified by mutation rather than by re-reading, because the whole failure mode here is an assertion that looks right and does nothing. `auth.routes.ts` was temporarily changed to throw `AppError(403, 'INVALID_CREDENTIALS', 'Invalid email or password.')` on the unknown-email path — **the same body, a different status**, which is precisely the divergence the tautology could not see. Under the old assertion that mutation passes; under the fixed one it fails. Both states were observed. The mutation was then reverted with `git checkout` and the tree confirmed identical.
-
-**F10 — the vacuous leak guard is gone.**
-
-Removed along with the now-unused `mongoose` import in that file. Jest already reports open handles, so the check was never carrying weight even in principle.
-
-**F11 — Decision 28 records the three test files.**
-
-`setupEnv.ts` is required because `config/env.ts` validates and exits at import time; `helpers.ts` prevents the connection lifecycle, user registration and the §7.6 fixture being written three times; `auth.routes.test.ts` exists because finding F2 asked for permanent auth coverage that §14.3 does not schedule.
+`BCRYPT_SALT_ROUNDS` is exported from `auth.routes.ts` and imported by `seed.ts`. Both hashing sites now read the same constant, so the §6.1 requirement cannot drift between them.
 
 ### Post-fix re-verification
 
 | Command | Result |
 | --- | --- |
-| `npx tsc --noEmit` (server) | exit 0 |
-| `npx tsc --noEmit` (client) | exit 0 |
-| `npm test` | 76 passed / 76 total — no regression, and no test lost |
+| `npx tsc --noEmit` (server and client) | exit 0 |
+| `npm test` | 76 passed / 76 total — no regression |
 | `npx prettier --check .` | clean |
-| `grep` for self-comparisons | no matches remain |
-| `grep -n readyState tests/` | no matches remain |
-| Mutation: unknown-email path returns 403 with an identical body | identical-401 test **fails** — the fixed assertion bites |
-| Mutation reverted, `git diff` | tree identical, suite green again |
+| `grep -rn 'BCRYPT_SALT_ROUNDS ='` | one declaration only |
+| `npm run seed -- --force` re-run | succeeded; `mongosh` confirms the stored hash still carries the `$2a$12$` prefix |
 
 ## Process deviations
 
-**One, disclosed.** F10 and F11 are Minor and `--fix` is documented for blocker and major findings only. Both were fixed alongside F9: F10 is two lines in the same test directory and F11 is a tracker row, and leaving either would have meant a further pass over the same files. This is the fourth run where the flag's stated scope has been narrower than what the turn warranted; the wording should be widened, but skills are only edited on request.
+**One, disclosed.** F12 is Minor and `--fix` is documented for blocker and major findings only. It was fixed because it is a one-line change to a security parameter that two files must agree on, and leaving a duplicated cost factor in place while writing a report that names it as a drift risk seemed worse than the scope stretch. Fifth run where the flag's stated scope has been narrower than the turn warranted; the wording deserves widening, but skills are edited on request only.
 
-Nothing else was written. The mutation used to validate F9 is permitted under `--fix`, was reverted with `git checkout`, and the tree was confirmed byte-identical afterwards.
+Nothing else was written outside the two report files and the two files the fix touched.
 
-## Gate check for M7
+## Gate check for M8
 
-Re-read before writing `[x]`: this report's `Run:` line names **M0–M7** and records **zero blockers**. Every M7 task in `TODO.md` is ticked and proven by a real command. The gate is met, so M7 closes in this turn's commit.
+Re-read before writing `[x]`: this report's `Run:` line names **M0–M8** and records **zero blockers**. The single M8 task in `TODO.md` is ticked and was proven by running the seed against the real database and inspecting the result independently with `mongosh`. The gate is met, so M8 closes in this turn's commit.
 
 ## Dimension notes
 
-Unchanged from the read-only run apart from the three fixes. In summary: both packages typecheck under the strict flags with zero `any`; 76 tests across four suites; all ten §14.2 cases and all five §14.3 cases present as real assertions; all twelve §10.4 codes reachable plus `ROUTE_NOT_FOUND`; every document query `userId`-scoped in the filter; `calculator.ts` still importless and still the only home of money arithmetic; indexes declared and used; the report on the §8.4 aggregation pipeline; Swagger complete with no dangling `$ref`s.
-
-The security guarantees are now regression-protected for the first time, and as of this run the identical-401 test genuinely enforces what it claims.
+- **Build and types** — both packages clean under the strict flags; zero `any`, zero suppressions; prettier clean.
+- **Tests** — 76 across four suites. All ten §14.2 calculator cases and all five §14.3 integration cases present as real assertions. The seed is not covered by an automated test and does not need to be: §15 asks for a script, §14 does not schedule tests for it, and its output was verified directly against the database.
+- **Spec conformance** — all twelve §10.4 codes reachable plus `ROUTE_NOT_FOUND`; `errorHandler` last; CORS explicit; `calculator.ts` importless; no `res.json()` outside the helpers. The §15 seed content matches exactly: both documents, the three sample line items, the finalized second document, and the `test@example.com` / `password123` user.
+- **Security (§16.1)** — `.env` exists on disk with a generated 64-character secret, is gitignored and untracked, and a `git grep` for hashes and JWTs across tracked files found only prose. The seed prints the seeded password to the console, which is intentional and correct: it is a known fixture credential and the developer needs it to log in. F12 was the one real weakness and is fixed.
+- **Efficiency** — unchanged. Indexes verified present on the *real* server this milestone, not just the in-memory one: `{userId,issueDate}`, `{userId,status}`, `{email}(unique)`.
+- **DRY** — money math still only in `calculator.ts`. Two arithmetic hits outside it, both legitimate: `Math.ceil(total / limit)` in the documents list is pagination, not currency, and `cents / 100` in the seed's `formatMoney` is display formatting of an already-computed integer — the same operation §12.7 mandates on the client. Neither derives a monetary value. Recorded explicitly so a future run does not re-flag them.
 
 ## Dimensions not applicable
 
 - **Frontend (§12)** — `client/src` is still the three-file build shell. First auditable at M9.
-- **Documentation (§18)** — no `README.md` yet; M9.
+- **Documentation (§18)** — no `README.md` yet; M9. Swagger (§13) passed at M6 and is unchanged.
 
 ## Notes for the next run
 
-1. **M8 is next and Blocker #1 bites there.** `npm run seed` is a standalone process pointed at `MONGODB_URI`; `mongodb-memory-server` does not help. The script can be written and typechecked without a database, but its verify step — run it, inspect the printed summary — cannot complete until MongoDB Community is installed. Expect M8 to close partially, or to be deferred, unless that has happened.
-2. **Route JSDoc still has nothing enforcing agreement with behaviour** (the F7 class). Any behaviour change needs its annotation updated in the same edit.
-3. **Test-suite runtime is about 200 seconds**, since each of the three integration suites starts its own `MongoMemoryServer`. Not a defect; a shared `globalSetup` would cut it if it becomes irritating.
+1. **M9 is the last milestone and by far the largest**: six pages, six components, the axios instance with both interceptors, `utils/format.ts`, and the twelve-section README. It is also the first milestone where the frontend dimension becomes auditable.
+2. **The end-to-end walkthrough is now possible.** MongoDB is running and seeded, so M9 can be verified by actually driving the app: log in as `test@example.com` / `password123`, open the seeded draft, confirm the displayed totals match the API response byte for byte, finalize it, and confirm every edit control disappears.
+3. **Route JSDoc still has nothing enforcing agreement with behaviour** (the F7 class). Any behaviour change in M9 that touches an endpoint needs its annotation updated in the same edit.
+4. **The client must never compute a total** — the single most important frontend rule, and the one worth checking first when M9 is audited.

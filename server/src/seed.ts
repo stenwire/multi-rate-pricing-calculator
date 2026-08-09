@@ -2,10 +2,9 @@ import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import { connectDatabase } from './config/db';
 import { DocumentModel, DocumentStatus } from './models/Document';
+import { BCRYPT_SALT_ROUNDS } from './routes/auth.routes';
 import { User } from './models/User';
 import { recalculateDocument } from './services/documentTotals';
-
-const BCRYPT_SALT_ROUNDS = 12;
 
 const SEED_USER = { email: 'test@example.com', password: 'password123' };
 

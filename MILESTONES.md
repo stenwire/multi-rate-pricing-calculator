@@ -65,12 +65,12 @@ A milestone reaches `[x]` only when every task under it in `TODO.md` is ticked *
 **Verify:** `cd server && npm test`
 **Completed:** 2026-08-08 - gate satisfied by the M0-M7 run (zero blockers), whose three findings were fixed in the same turn. Suite went from 12 to 76 tests across four files; `tsc --noEmit` exit 0 on both packages, prettier clean, zero `any`, no `.only` or `.skip`. All five section 14.3 cases present as real assertions, plus the concurrent-finalize race, the section 7.6 totals end to end, inclusive date bounds and the INVALID_DATE_RANGE/VALIDATION_ERROR split. Sensitivity proved by four mutations: disabling `requireDraft` failed 7 tests, dropping the `userId` scope failed the ownership tests, splitting login's throw site failed the identical-401 test, and returning 403 with an identical body failed it again once F9 was fixed. Each reverted, tree confirmed identical.
 
-## `[ ]` M8 — Seed
+## `[x]` M8 — Seed
 
 **Goal:** `server/src/seed.ts` runnable as `npm run seed`, with `-- --force` to wipe (spec §15).
 **Acceptance:** Both sample documents created, every computed field derived from the calculator rather than hardcoded.
 **Verify:** `cd server && npm run seed` against a running MongoDB, then inspect the printed summary.
-**Completed:**
+**Completed:** 2026-08-08 - gate satisfied by the M0-M8 run (zero blockers), whose single finding was fixed in the same turn. The first milestone verified against a real MongoDB rather than an in-memory one. `npm run seed` printed the section 7.6 totals, and mongosh then confirmed independently what was stored: subtotal=45000 discount=4000 tax=1150 grand=42150 on Sample Invoice and 150000/7500/14250/156750 on Q1 Consulting, the password as a $2a$12$ hash rather than plaintext, both compound indexes and the unique email index present on the real server, line item ids generated, and both documents owned by the seeded user. Rerunning without `--force` refuses with a message naming the flag instead of dying on E11000; rerunning with `--force` leaves exactly one user and two documents. No total in the seed is hand-written - every figure comes from `recalculateDocument`.
 
 ## `[ ]` M9 — Client and README
 

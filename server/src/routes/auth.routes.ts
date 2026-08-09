@@ -14,7 +14,7 @@ import {
   registerSchema,
 } from '../validators/auth.validators';
 
-const BCRYPT_SALT_ROUNDS = 12;
+export const BCRYPT_SALT_ROUNDS = 12;
 
 const router = Router();
 
