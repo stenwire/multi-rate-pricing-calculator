@@ -89,8 +89,15 @@ export function clearStoredAuth(): void {
   localStorage.removeItem(USER_STORAGE_KEY);
 }
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ?? 'http://localhost:5000/api/v1';
+
+// Swagger UI is mounted at the server root, not under the versioned API prefix,
+// so the docs URL is the base with /api/v1 trimmed off rather than a second env var.
+export const API_DOCS_URL = `${API_BASE_URL.replace(/\/api\/v1\/?$/, '')}/api-docs`;
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:5000/api/v1',
+  baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 });
 

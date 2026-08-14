@@ -1,5 +1,6 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { API_DOCS_URL } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 
 const navItems = [
@@ -12,11 +13,24 @@ const navClass = ({ isActive }: { isActive: boolean }) =>
     isActive ? 'bg-ink text-white' : 'text-muted hover:bg-ledger hover:text-ink'
   }`;
 
+const inactiveNavClass = navClass({ isActive: false });
+
+const mobileNavClass = ({ isActive }: { isActive: boolean }) =>
+  `block rounded-lg px-3 py-2.5 text-sm font-medium ${
+    isActive ? 'bg-ink text-white' : 'text-ink hover:bg-ledger'
+  }`;
+
 export default function Layout({ children }: { children: ReactNode }) {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // The mobile sheet is not remounted on navigation, so it would otherwise stay
+  // open over the page the user just moved to.
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     setMenuOpen(false);
@@ -47,34 +61,43 @@ export default function Layout({ children }: { children: ReactNode }) {
           </Link>
 
           {isAuthenticated && (
-            <nav className="ml-4 hidden items-center gap-1 sm:flex">
+            <nav className="ml-2 hidden items-center gap-1 md:flex">
               {navItems.map((item) => (
                 <NavLink key={item.to} to={item.to} className={navClass}>
                   {item.label}
                 </NavLink>
               ))}
+              <a
+                href={API_DOCS_URL}
+                target="_blank"
+                rel="noreferrer"
+                className={inactiveNavClass}
+              >
+                API docs
+              </a>
             </nav>
           )}
 
           <div className="ml-auto flex items-center gap-2">
             {isAuthenticated ? (
               <>
-                <span className="hidden text-sm text-muted md:inline">
+                <span className="hidden max-w-[16ch] truncate text-sm text-muted lg:inline">
                   {user?.email}
                 </span>
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="btn btn-quiet"
+                  className="btn btn-quiet hidden md:inline-flex"
                 >
                   Sign out
                 </button>
                 <button
                   type="button"
                   aria-expanded={menuOpen}
+                  aria-controls="mobile-nav"
                   aria-label="Toggle navigation"
                   onClick={() => setMenuOpen((open) => !open)}
-                  className="btn btn-quiet px-2.5 sm:hidden"
+                  className="btn btn-quiet px-2.5 md:hidden"
                 >
                   <span aria-hidden>{menuOpen ? '✕' : '☰'}</span>
                 </button>
@@ -84,8 +107,12 @@ export default function Layout({ children }: { children: ReactNode }) {
                 <NavLink to="/login" className={navClass}>
                   Sign in
                 </NavLink>
-                <NavLink to="/register" className="btn btn-primary">
-                  Create account
+                <NavLink
+                  to="/register"
+                  className="btn btn-primary whitespace-nowrap"
+                >
+                  <span className="hidden xs:inline">Create account</span>
+                  <span className="xs:hidden">Sign up</span>
                 </NavLink>
               </>
             )}
@@ -93,21 +120,36 @@ export default function Layout({ children }: { children: ReactNode }) {
         </div>
 
         {isAuthenticated && menuOpen && (
-          <nav className="border-t border-rule px-4 pb-3 sm:hidden">
+          <nav
+            id="mobile-nav"
+            className="space-y-1 border-t border-rule px-4 pt-2 pb-3 md:hidden"
+          >
             {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                onClick={() => setMenuOpen(false)}
-                className={({ isActive }) =>
-                  `mt-2 block rounded-lg px-3 py-2.5 text-sm font-medium ${
-                    isActive ? 'bg-ink text-white' : 'text-ink hover:bg-ledger'
-                  }`
-                }
-              >
+              <NavLink key={item.to} to={item.to} className={mobileNavClass}>
                 {item.label}
               </NavLink>
             ))}
+            <a
+              href={API_DOCS_URL}
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => setMenuOpen(false)}
+              className={mobileNavClass({ isActive: false })}
+            >
+              API docs
+            </a>
+            <div className="mt-2 flex items-center justify-between gap-3 border-t border-rule pt-3">
+              <span className="min-w-0 truncate text-sm text-muted">
+                {user?.email}
+              </span>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="btn btn-quiet shrink-0"
+              >
+                Sign out
+              </button>
+            </div>
           </nav>
         )}
       </header>
