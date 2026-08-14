@@ -7,15 +7,15 @@ import lineItemRoutes from './routes/lineItem.routes';
 import reportRoutes from './routes/report.routes';
 import { setupSwagger } from './swagger';
 import { AppError } from './utils/AppError';
-
-// Spec §4 defines no variable for the allowed origin, so the Vite dev server is named
-// explicitly here rather than defaulting to the wide-open cors() with no arguments.
-const CLIENT_ORIGIN = 'http://localhost:5173';
+import { env } from './config/env';
 
 export const app = express();
 
+// An explicit allowlist rather than the wide-open cors() with no arguments. cors() echoes
+// back whichever entry matches, so a request from an origin outside the list gets no
+// Access-Control-Allow-Origin header at all and the browser blocks it.
+app.use(cors({ origin: env.CLIENT_ORIGIN }));
 app.use(express.json());
-app.use(cors({ origin: CLIENT_ORIGIN }));
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/documents', documentRoutes);
