@@ -4,12 +4,12 @@ coverage/
 package-lock.json
 
 # The contract document is kept byte-identical to what was supplied.
-TECHNICAL_SPEC.md
+docs/TECHNICAL_SPEC.md
 
 # Build-process trackers, rewritten continuously by the /implement and /verify skills.
-MILESTONES.md
-TODO.md
-VERIFICATION.md
+docs/MILESTONES.md
+docs/TODO.md
+docs/VERIFICATION.md
 
 # Skill instruction documents, not shipped code.
 .claude/

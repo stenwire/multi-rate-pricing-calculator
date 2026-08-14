@@ -12,7 +12,7 @@ A milestone reaches `[x]` only when every task under it in `TODO.md` is ticked *
 ## `[x]` M0 — Skills and tracking
 
 **Goal:** Project-housed `/implement` and `/verify` skills, a git repository, and this tracker.
-**Acceptance:** Both skills invocable; `MILESTONES.md` and `TODO.md` at the project root; `git log` shows an initial commit.
+**Acceptance:** Both skills invocable; `MILESTONES.md` and `TODO.md` present under `docs/`; `git log` shows an initial commit.
 **Verify:** `git log --oneline` and confirm both skills appear in the skill list.
 **Completed:** 2026-08-08 — both `SKILL.md` files validated for layout and frontmatter, tracker seeded, initial commit made. Skills are discovered at session start, so `/implement` and `/verify` become invocable from the next session onward.
 

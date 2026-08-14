@@ -4,16 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Current state
 
-The application has not been written yet. [TECHNICAL_SPEC.md](TECHNICAL_SPEC.md) is a complete, prescriptive implementation contract for a Multi-Rate Pricing Calculator (a take-home assignment) and is the authority: it explicitly states that anything not specified is not required, and anything specified is mandatory. Read the relevant section before implementing, and do not add features, files, or dependencies it does not call for (see its Appendix C for the explicit out-of-scope list).
+The application has not been written yet. [TECHNICAL_SPEC.md](docs/TECHNICAL_SPEC.md) is a complete, prescriptive implementation contract for a Multi-Rate Pricing Calculator (a take-home assignment) and is the authority: it explicitly states that anything not specified is not required, and anything specified is mandatory. Read the relevant section before implementing, and do not add features, files, or dependencies it does not call for (see its Appendix C for the explicit out-of-scope list).
 
 ## Workflow — read the tracker first
 
-The build is driven by two project-housed skills, and progress is recorded in files rather than in conversation memory. **Before doing any work, read [MILESTONES.md](MILESTONES.md) and [TODO.md](TODO.md)** — they, not your recollection, say what is already done.
+The build is driven by two project-housed skills, and progress is recorded in files rather than in conversation memory. **Before doing any work, read [MILESTONES.md](docs/MILESTONES.md) and [TODO.md](docs/TODO.md)** — they, not your recollection, say what is already done.
 
 - **`/implement`** ([.claude/skills/implement/](.claude/skills/implement/)) — carries the build forward one task at a time through milestones M0–M9. Its loop is fixed: read the tracker, announce the task, implement it, prove it with a real command, write back the change log, commit. A task is never ticked on inspection alone.
-- **`/verify`** ([.claude/skills/verify/](.claude/skills/verify/)) — audits what exists across eight dimensions (build/types, tests, spec conformance, security, efficiency, DRY, frontend, docs) against [its checklist](.claude/skills/verify/references/checklist.md), and writes a severity-ranked report to `VERIFICATION.md`. Run it before closing any milestone; blockers must be fixed, not waived.
+- **`/verify`** ([.claude/skills/verify/](.claude/skills/verify/)) — audits what exists across eight dimensions (build/types, tests, spec conformance, security, efficiency, DRY, frontend, docs) against [its checklist](.claude/skills/verify/references/checklist.md), and writes a severity-ranked report to `docs/VERIFICATION.md`. Run it before closing any milestone; blockers must be fixed, not waived.
 
-`MILESTONES.md`, `TODO.md`, and `VERIFICATION.md` are build artifacts deliberately outside the spec §3 tree — see the Decisions table in `TODO.md`.
+`docs/MILESTONES.md`, `docs/TODO.md`, and `docs/VERIFICATION.md` are build artifacts deliberately outside the spec §3 tree — see the Decisions table in `docs/TODO.md`.
 
 Two independent npm projects will live under `server/` and `client/`. There is no monorepo tooling, no workspaces, and deliberately no shared package — types needed on both sides are duplicated by design.
 

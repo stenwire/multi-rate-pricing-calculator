@@ -1,20 +1,20 @@
 ---
 name: verify
-description: Audit the Multi-Rate Pricing Calculator across build/types, tests, spec conformance, security, efficiency, DRY/simplicity, and frontend correctness, then write a severity-ranked findings report to VERIFICATION.md. Use when asked to verify, audit, review, check, or sanity-test work that has been completed, and before closing any milestone.
+description: Audit the Multi-Rate Pricing Calculator across build/types, tests, spec conformance, security, efficiency, DRY/simplicity, and frontend correctness, then write a severity-ranked findings report to docs/VERIFICATION.md. Use when asked to verify, audit, review, check, or sanity-test work that has been completed, and before closing any milestone.
 ---
 
 # Verify
 
-Audit what has actually been built against `TECHNICAL_SPEC.md`.
+Audit what has actually been built against `docs/TECHNICAL_SPEC.md`.
 
 ## Read-only contract — non-negotiable
 
 Without `--fix`, this run is **strictly read-only**. Exactly two files may be written, and nothing else:
 
-- `VERIFICATION.md` — the report
-- `TODO.md` — the change-log line and any blocker rows
+- `docs/VERIFICATION.md` — the report
+- `docs/TODO.md` — the change-log line and any blocker rows
 
-**Every other path in the repository is off limits**, including `server/`, `client/`, the repo root, and `.claude/`. That prohibition covers:
+**Every other path in the repository is off limits**, including `server/`, `client/`, the repo root, the rest of `docs/`, and `.claude/`. That prohibition covers:
 
 - creating a file, *even one you intend to delete in the same turn* — no probes, no scratch modules, no `__tmp*.ts`
 - `prettier --write`, `sed -i`, `npm install`, `git add`, `git commit`, or anything that mutates the tree or the index
@@ -28,7 +28,7 @@ A temporary file is a change. Deleting it afterwards does not make the run read-
 2. If it genuinely needs a scratch file, put it **outside the project** (the session scratchpad directory, with a tsconfig that `extends` the real one) so the repository is untouched.
 3. If neither works, report the item as **`NOT VERIFIABLE IN READ-ONLY MODE`** in the Commands table, state what would settle it, and move on. An honestly unverified line is worth more than a silently perturbed tree.
 
-Before finishing, run `git status --porcelain` and confirm the only modified paths are `VERIFICATION.md` and `TODO.md`. If anything else is dirty, say so in the chat summary — loudly and first, before the verdict.
+Before finishing, run `git status --porcelain` and confirm the only modified paths are `docs/VERIFICATION.md` and `docs/TODO.md`. If anything else is dirty, say so in the chat summary — loudly and first, before the verdict.
 
 With `--fix`, code changes are permitted, but only after the report is written, and only for blocker and major findings.
 
@@ -37,11 +37,11 @@ With `--fix`, code changes are permitted, but only after the report is written, 
 Default: everything built so far. The user may narrow it:
 
 - `/verify security` — one dimension
-- `/verify M4` — one milestone's surface area, taken from `MILESTONES.md`
+- `/verify M4` — one milestone's surface area, taken from `docs/MILESTONES.md`
 - `/verify server/src/routes/document.routes.ts` — one path
 - `/verify --fix` — after reporting, apply the fixes for blocker and major findings, then re-run the failing checks
 
-Read `MILESTONES.md` first to learn what is claimed complete. **Only audit what exists.** A file that has not been written yet is not a finding — say the dimension is not yet applicable and move on.
+Read `docs/MILESTONES.md` first to learn what is claimed complete. **Only audit what exists.** A file that has not been written yet is not a finding — say the dimension is not yet applicable and move on.
 
 ## Procedure
 
@@ -73,7 +73,7 @@ Verify a finding before reporting it. Trace the actual code path; if you cannot 
 
 ## Output
 
-Write `VERIFICATION.md` at the project root, replacing any previous run:
+Write `docs/VERIFICATION.md`, replacing any previous run:
 
 ```markdown
 # Verification Report
@@ -92,12 +92,12 @@ Run: <date> · Scope: <scope> · Verdict: PASS | PASS WITH FINDINGS | FAIL
 
 Verdict is **FAIL** if any blocker is open, **PASS WITH FINDINGS** if only major or minor remain, **PASS** if clean.
 
-Then append one line to the `TODO.md` change log recording the run and its verdict, and add each blocker to the `TODO.md` Blockers table so it survives the session.
+Then append one line to the `docs/TODO.md` change log recording the run and its verdict, and add each blocker to the `docs/TODO.md` Blockers table so it survives the session.
 
 Finally, summarize for the user in chat: the verdict, the blocker count, and the single most important thing to fix. Do not paste the whole table into chat — it is in the file.
 
 ## Disclose your own deviations first
 
-If this run departed from the contract above in any way — a file written, a check skipped, a command that turned out not to be read-only — **say so at the top of the chat summary, before the verdict, unprompted.** Record it in `VERIFICATION.md` too, under a `## Process deviations` heading.
+If this run departed from the contract above in any way — a file written, a check skipped, a command that turned out not to be read-only — **say so at the top of the chat summary, before the verdict, unprompted.** Record it in `docs/VERIFICATION.md` too, under a `## Process deviations` heading.
 
 Do not wait to be asked. Do not report it only if noticed. A verdict from a run that broke its own rules is not trustworthy until the deviation is on the table, and burying it costs more than the deviation itself.

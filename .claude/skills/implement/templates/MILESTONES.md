@@ -1,18 +1,18 @@
 # Milestones — Multi-Rate Pricing Calculator
 
 Created: {{DATE}}
-Governing document: `TECHNICAL_SPEC.md`
+Governing document: `docs/TECHNICAL_SPEC.md`
 
 Status: `[ ]` not started · `[~]` in progress · `[x]` complete and verified
 
-A milestone reaches `[x]` only when every task under it in `TODO.md` is ticked **and** `/verify` reports zero blockers for it.
+A milestone reaches `[x]` only when every task under it in `docs/TODO.md` is ticked **and** `/verify` reports zero blockers for it.
 
 ---
 
 ## `[ ]` M0 — Skills and tracking
 
 **Goal:** Project-housed `/implement` and `/verify` skills, a git repository, and this tracker.
-**Acceptance:** Both skills invocable; `MILESTONES.md` and `TODO.md` at the project root; `git log` shows an initial commit.
+**Acceptance:** Both skills invocable; `docs/MILESTONES.md` and `docs/TODO.md` present; `git log` shows an initial commit.
 **Verify:** `git log --oneline` and confirm both skills appear in the skill list.
 **Completed:**
 

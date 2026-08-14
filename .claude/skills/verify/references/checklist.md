@@ -1,6 +1,6 @@
 # Audit Checklist
 
-Every item cites the governing section of `TECHNICAL_SPEC.md`. Skip items whose code does not exist yet.
+Every item cites the governing section of `docs/TECHNICAL_SPEC.md`. Skip items whose code does not exist yet.
 
 ---
 

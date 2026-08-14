@@ -1,7 +1,7 @@
 # Working Log — Multi-Rate Pricing Calculator
 
 Created: {{DATE}}
-Phase ledger: `MILESTONES.md` · Contract: `TECHNICAL_SPEC.md`
+Phase ledger: `docs/MILESTONES.md` · Contract: `docs/TECHNICAL_SPEC.md`
 
 ---
 
@@ -15,7 +15,7 @@ Ticked only when verified by a real command, never on inspection alone.
 - [ ] `git init`, root `.gitignore`
 - [ ] `/implement` skill with milestone and todo templates
 - [ ] `/verify` skill with audit checklist
-- [ ] Seed `MILESTONES.md` and `TODO.md`
+- [ ] Seed `docs/MILESTONES.md` and `docs/TODO.md`
 
 ### M1 — Scaffold
 
