@@ -1,6 +1,9 @@
 @import 'tailwindcss';
 
 @theme {
+  /* Small phones (iPhone SE and narrower) need a stop below Tailwind's 40rem `sm`. */
+  --breakpoint-xs: 23.5rem;
+
   --color-paper: #fafafc;
   --color-surface: #ffffff;
   --color-ledger: #f1f3f8;

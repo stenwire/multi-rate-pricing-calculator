@@ -51,15 +51,20 @@ export default function DocumentsListPage() {
   return (
     <div className="space-y-5">
       <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Documents</h1>
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
+            Documents
+          </h1>
           <p className="mt-1 text-sm text-muted">
             {loading
               ? 'Loading…'
               : `${total} ${total === 1 ? 'document' : 'documents'}`}
           </p>
         </div>
-        <Link to="/documents/new" className="btn btn-primary">
+        <Link
+          to="/documents/new"
+          className="btn btn-primary w-full whitespace-nowrap xs:w-auto"
+        >
           New document
         </Link>
       </header>
@@ -67,7 +72,7 @@ export default function DocumentsListPage() {
       <div
         role="tablist"
         aria-label="Filter by status"
-        className="inline-flex rounded-lg border border-rule bg-surface p-1"
+        className="flex rounded-lg border border-rule bg-surface p-1 xs:inline-flex"
       >
         {filters.map((option) => (
           <button
@@ -75,7 +80,7 @@ export default function DocumentsListPage() {
             role="tab"
             aria-selected={filter === option.value}
             onClick={() => setFilter(option.value)}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors xs:flex-none ${
               filter === option.value
                 ? 'bg-ink text-white'
                 : 'text-muted hover:text-ink'
