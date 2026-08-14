@@ -4,6 +4,15 @@
 
 A web application for building pricing documents from line items, where each line carries its own optional discount (fixed or percentage, never both) and its own tax rate. Every monetary value is calculated on the server and stored as an integer number of cents, so the client only ever displays figures it was given. Documents begin as drafts, can be edited freely, and are finalized in a one-way transition after which the API rejects every mutation. A summary report aggregates finalized documents across a date range.
 
+## Live deployment
+
+| What       | Where                                                           |
+| ---------- | --------------------------------------------------------------- |
+| Web app    | https://crossval-93f0b.web.app/                                 |
+| Swagger UI | https://crossval-api-863312702719.us-central1.run.app/api-docs/ |
+
+The client is on Firebase Hosting and the API on Cloud Run. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for how both are built and released.
+
 ## Tech Stack
 
 **Backend** — Node.js 20+, TypeScript 5 (strict), Express 4, MongoDB with Mongoose 8, Zod 3 for request validation, JSON Web Tokens for auth, bcryptjs for password hashing, swagger-jsdoc and swagger-ui-express for the OpenAPI docs, Jest with ts-jest, supertest and mongodb-memory-server for tests.
@@ -54,6 +63,8 @@ The seed creates a user `test@example.com` / `password123` and two documents. Re
 cd server && npm run dev     # API on http://localhost:5000
 cd client && npm run dev     # UI  on http://localhost:5173
 ```
+
+Running locally:
 
 | What       | Where                          |
 | ---------- | ------------------------------ |
